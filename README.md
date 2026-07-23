@@ -21,7 +21,7 @@ A highly customizable, and highly personal habit tracker app built with Python F
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/noboruru963/daily-tracker
    cd daily
    ```
 
