@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}About - Daily{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-3">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-body text-center p-5">
+                    <i class="bi bi-check-circle-fill mb-3" style="font-size: 4rem; background: linear-gradient(135deg, #10b981, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                    <h2 class="fw-bold">Daily Habit Tracker</h2>
+                    <p class="text-muted">Build better habits, one day at a time.</p>
+                    
+                    <hr>
+                    
+                    <div class="text-start">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-info-circle me-2"></i>Version</h5>
+                        <p class="ms-3">Version <strong>2.0</strong></p>
+                        
+                        <h5 class="fw-bold mb-3 mt-4"><i class="bi bi-people me-2"></i>Developed By</h5>
+                        <ul class="list-unstyled ms-3">
+                            <li class="mb-1"><i class="bi bi-person-fill me-2" style="color: var(--primary);"></i>Alexander Marchiano</li>
+                            <li class="mb-1"><i class="bi bi-person-fill me-2" style="color: var(--primary);"></i>Jonathan Gouw Alexandrio</li>
+                            <li class="mb-1"><i class="bi bi-person-fill me-2" style="color: var(--primary);"></i>Vincent Valentino</li>
+                            <li class="mb-1"><i class="bi bi-person-fill me-2" style="color: var(--primary);"></i>Simmon Priady Sasmita</li>
+                        </ul>
+                        
+                        <h5 class="fw-bold mb-3 mt-4"><i class="bi bi-journal-text me-2"></i>Update Log</h5>
+                        <div class="ms-3">
+                            <div class="mb-3 p-3 bg-light rounded">
+                                <strong>v2.0</strong> <span class="text-muted">- Major Update</span>
+                                <ul class="mt-2 mb-0">
+                                    <li>Numeric data type selection (positive/negative integer/float) with validation</li>
+                                    <li>Habit theme color now applied to all visual models (progress bars, charts, icons)</li>
+                                    <li>10 theme color options in habit creation and editing</li>
+                                    <li>Dynamic primary color setting across entire site (buttons, links, accents)</li>
+                                    <li>15 pastel and earth tone primary colors in Settings</li>
+                                    <li>Full dark mode text contrast fix across all pages and components</li>
+                                    <li>Calendar activity types with custom icons and colors</li>
+                                    <li>Calendar day-cell activity previews (show up to 4, truncation with ellipsis)</li>
+                                    <li>Copyable public habits via "Use as Template" button</li>
+                                    <li>Likes-only system: oval thumbs-up button with instant toggle</li>
+                                    <li>Pin habits as compact widgets to dashboard top</li>
+                                    <li>Record value input: typing only (scroll-to-change removed)</li>
+                                </ul>
+                            </div>
+                            <div class="mb-3 p-3 bg-light rounded">
+                                <strong>v1.2</strong> <span class="text-muted">- Previous Update</span>
+                                <ul class="mt-2 mb-0">
+                                    <li>Functional dark mode theme switching in Settings</li>
+                                    <li>Green color theme as primary design</li>
+                                    <li>More theme colors for habit customization</li>
+                                    <li>Calendar click-to-add-record popup</li>
+                                    <li>Enhanced record editing with visualization updates</li>
+                                    <li>Community like, dislike, and report features</li>
+                                    <li>More habit icons: cooking, gym, running, computer, writing</li>
+                                    <li>Symbol option when adding records</li>
+                                    <li>Profile picture upload support</li>
+                                    <li>Change username in Settings</li>
+                                    <li>Drag-to-reorder records</li>
+                                    <li>Pie chart option for percentage model</li>
+                                    <li>Step descriptions in progression model</li>
+                                    <li>Direct percentage calculation from input value</li>
+                                    <li>About page with development information</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

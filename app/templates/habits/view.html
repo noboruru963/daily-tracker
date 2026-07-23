@@ -1,0 +1,553 @@
+{% extends "base.html" %}
+
+{% block title %}{{ habit.name }} - Daily{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('habits.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">{{ habit.name }}</li>
+                </ol>
+            </nav>
+            <h1 class="display-6 fw-bold" style="color: {{ habit.visual_settings.get('theme_color', '#10b981') }};">
+                <i class="bi bi-{{ habit.visual_settings.get('icon', 'house') }} me-2"></i>{{ habit.name }}
+            </h1>
+            <p class="text-muted">{{ habit.description or 'No description' }}</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('tracking.add_record', habit_id=habit.id) }}" class="btn btn-success me-2">
+                <i class="bi bi-plus-circle me-2"></i>Add Record
+            </a>
+            <a href="{{ url_for('habits.edit_habit', habit_id=habit.id) }}" class="btn btn-outline-primary me-2">
+                <i class="bi bi-pencil me-2"></i>Edit
+            </a>
+            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                <i class="bi bi-trash me-2"></i>Delete
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header" style="border-top: 3px solid {{ habit.visual_settings.get('theme_color', '#10b981') }};">
+                    <i class="bi bi-eye me-2"></i>{{ habit.visual_model_type|capitalize }} View
+                </div>
+                <div class="card-body">
+                    {% if habit.visual_model_type == 'graph' %}
+                    <div class="graph-container">
+                        <canvas id="habitGraph"></canvas>
+                    </div>
+                    
+                    {% elif habit.visual_model_type == 'progression' %}
+                    <div class="progression-view">
+                        {% set steps = habit.visual_settings.get('steps', []) %}
+                        {% set current_step = habit.visual_settings.get('current_step', 0) %}
+                        
+                        <div class="step-progress">
+                            <div class="progress-bar" style="width: {{ (current_step / steps|length * 100) if steps|length > 0 else 0 }}%; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></div>
+                            {% for step in steps %}
+                            <div class="step-item {{ 'completed' if loop.index0 < current_step else ('current' if loop.index0 == current_step else '') }}" style="{% if loop.index0 < current_step %}background: {{ habit.visual_settings.get('theme_color', '#10b981') }};{% elif loop.index0 == current_step %}background: {{ habit.visual_settings.get('theme_color', '#10b981') }};{% endif %}">{{ loop.index }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h5>Current Step: {{ steps[current_step].name if current_step < steps|length else 'Completed' }}</h5>
+                            <p class="text-muted">
+                                {% if current_step < steps|length %}
+                                    Step {{ current_step + 1 }} of {{ steps|length }}
+                                {% else %}
+                                    All steps completed!
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <h6>Steps:</h6>
+                            <ul class="list-group">
+                                {% for step in steps %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center {{ 'list-group-item-success' if loop.index0 < current_step else ('list-group-item-primary' if loop.index0 == current_step else '') }}">
+                                    <div>
+                                        <i class="bi bi-{{ 'check-circle-fill' if loop.index0 < current_step else ('arrow-right-circle-fill' if loop.index0 == current_step else 'circle') }} me-2" style="color: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></i>
+                                        <strong>{{ step.name }}</strong>
+                                        {% if step.description %}
+                                        <div class="text-muted ms-4 mt-1" style="font-size: 0.85rem;">{{ step.description }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <span class="badge" style="background: {{ habit.visual_settings.get('theme_color', '#10b981') }}20; color: {{ habit.visual_settings.get('theme_color', '#10b981') }};">
+                                        {{ 'Completed' if loop.index0 < current_step else ('Current' if loop.index0 == current_step else 'Pending') }}
+                                    </span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    {% elif habit.visual_model_type == 'calendar' %}
+                    <div class="calendar-view">
+                        <div class="row mb-4">
+                            <div class="col-md-6"><h5>Current Month</h5></div>
+                            <div class="col-md-6 text-end">
+                                <button class="btn btn-outline-secondary btn-sm" id="prevMonth"><i class="bi bi-chevron-left"></i></button>
+                                <span class="mx-3 fw-semibold" id="currentMonth"></span>
+                                <button class="btn btn-outline-secondary btn-sm" id="nextMonth"><i class="bi bi-chevron-right"></i></button>
+                            </div>
+                        </div>
+                        
+                        <div class="calendar-grid" id="calendarView">
+                            <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Sun</div>
+                            <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Mon</div>
+                            <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Tue</div>
+                            <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Wed</div>
+                            <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Thu</div>
+                            <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Fri</div>
+                            <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Sat</div>
+                        </div>
+                        
+                        <!-- Activity Types Legend -->
+                        {% set activity_types = habit.visual_settings.get('activity_types', []) %}
+                        {% if activity_types %}
+                        <div class="mt-4">
+                            <h6>Activity Types:</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for atype in activity_types %}
+                                <span class="badge" style="background: {{ atype.color }}; color: white;">
+                                    <i class="bi bi-{{ atype.icon }} me-1"></i>{{ atype.name }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mt-4">
+                            <h6>Schedule:</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for day in habit.visual_settings.get('schedule', []) %}
+                                <span class="badge" style="background: {{ habit.visual_settings.get('theme_color', '#10b981') }};">{{ day|capitalize }}</span>
+                                {% endfor %}
+                                {% if not habit.visual_settings.get('schedule', []) %}
+                                <span class="text-muted">No schedule set</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% elif habit.visual_model_type == 'percentage' %}
+                    <div class="percentage-view text-center">
+                        {% set current = habit.visual_settings.get('current_value', 0) %}
+                        {% set min_val = habit.visual_settings.get('min_value', 0) %}
+                        {% set max_val = habit.visual_settings.get('max_value', 100) %}
+                        {% set percentage = ((current - min_val) / (max_val - min_val) * 100) if max_val > min_val else 0 %}
+                        
+                        <div class="percentage-display">{{ percentage|round }}%</div>
+                        <div class="progress mt-4" style="height: 30px;">
+                            <div class="progress-bar" style="width: {{ percentage }}%; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <span>{{ min_val }} {{ habit.visual_settings.get('unit', '') }}</span>
+                            <span>{{ max_val }} {{ habit.visual_settings.get('unit', '') }}</span>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-4"><div class="stat-card"><div class="stat-value" style="color: {{ habit.visual_settings.get('theme_color', '#10b981') }};">{{ current }}</div><div class="stat-label">Current {{ habit.visual_settings.get('unit', '') }}</div></div></div>
+                            <div class="col-md-4"><div class="stat-card"><div class="stat-value" style="color: var(--success);">{{ max_val }}</div><div class="stat-label">Target {{ habit.visual_settings.get('unit', '') }}</div></div></div>
+                            <div class="col-md-4"><div class="stat-card"><div class="stat-value" style="color: var(--warning);">{{ max_val - current }}</div><div class="stat-label">Remaining {{ habit.visual_settings.get('unit', '') }}</div></div></div>
+                        </div>
+                        
+                        <!-- Pie Chart -->
+                        <div class="mt-4">
+                            <canvas id="pieChart" style="max-height: 250px;"></canvas>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Records List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-list-ul me-2"></i>Recent Records</span>
+                    <a href="{{ url_for('tracking.view_records', habit_id=habit.id) }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if records %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th style="width:30px;"></th>
+                                    <th>Date</th>
+                                    <th>Value</th>
+                                    <th>Description</th>
+                                    {% if habit.visual_model_type == 'progression' %}<th>Step</th>
+                                    {% elif habit.visual_model_type == 'calendar' %}<th>Time / Activity</th>
+                                    {% elif habit.visual_model_type == 'percentage' %}<th>Progress</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody id="recordsBody">
+                                {% for record in records[:5] %}
+                                <tr draggable="true" data-record-id="{{ record.id }}" class="record-row">
+                                    <td><i class="bi bi-grip-vertical drag-handle"></i></td>
+                                    <td>{{ record.date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td><strong>{{ record.numerical_value }}</strong></td>
+                                    <td>{{ record.description or '-' }}</td>
+                                    {% if habit.visual_model_type == 'progression' %}
+                                    <td><span class="badge" style="background: {{ habit.visual_settings.get('theme_color', '#10b981') }};">Step {{ record.step_number }}</span></td>
+                                    {% elif habit.visual_model_type == 'calendar' %}
+                                    <td>
+                                        {{ record.time_spent }} min
+                                        {% if record.activity_type %}<span class="badge bg-secondary ms-1">{{ record.activity_type }}</span>{% endif %}
+                                    </td>
+                                    {% elif habit.visual_model_type == 'percentage' %}
+                                    <td>
+                                        <div class="progress" style="height: 6px; width: 100px;">
+                                            <div class="progress-bar" style="width: {{ (record.numerical_value / habit.visual_settings.get('max_value', 100) * 100)|round }}%; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></div>
+                                        </div>
+                                        <small class="text-muted">{{ (record.numerical_value / habit.visual_settings.get('max_value', 100) * 100)|round }}%</small>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox text-muted" style="font-size: 2rem;"></i>
+                        <p class="mt-2 text-muted">No records yet</p>
+                        <a href="{{ url_for('tracking.add_record', habit_id=habit.id) }}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus me-1"></i>Add First Record
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Habit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete "<strong>{{ habit.name }}</strong>"?</p>
+                <p class="text-danger"><small>This action cannot be undone. All records will be deleted.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('habits.delete_habit', habit_id=habit.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Calendar Quick Add Modal -->
+<div class="modal fade" id="quickAddModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Add Record</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-2" id="quickAddDate"></p>
+                <div class="mb-3">
+                    <label class="form-label">Value</label>
+                    <input type="number" step="0.01" class="form-control" id="quickAddValue" value="1">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-control" id="quickAddDesc" placeholder="Optional note...">
+                </div>
+                {% set activity_types = habit.visual_settings.get('activity_types', []) %}
+                {% if activity_types %}
+                <div class="mb-3">
+                    <label class="form-label">Activity Type</label>
+                    <select class="form-select" id="quickAddActivity">
+                        <option value="">None</option>
+                        {% for atype in activity_types %}
+                        <option value="{{ atype.name }}">{{ atype.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="submitQuickAdd()">
+                    <i class="bi bi-check me-1"></i>Add
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if habit.visual_model_type == 'graph' %}
+        initHabitGraph();
+    {% elif habit.visual_model_type == 'calendar' %}
+        initCalendar();
+    {% elif habit.visual_model_type == 'percentage' %}
+        initPieChart();
+    {% endif %}
+    initDragReorder();
+});
+
+{% if habit.visual_model_type == 'graph' %}
+function initHabitGraph() {
+    fetch('/tracking/api/{{ habit.id }}/data')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var ctx = document.getElementById('habitGraph').getContext('2d');
+            var labels = data.chart_data.labels.length > 0 ? data.chart_data.labels : ['No data'];
+            var values = data.chart_data.values.length > 0 ? data.chart_data.values : [0];
+            var color = data.habit.visual_settings && data.habit.visual_settings.theme_color ? data.habit.visual_settings.theme_color : '#10b981';
+            new Chart(ctx, {
+                type: '{{ habit.visual_settings.get("graph_type", "line") }}',
+                data: {
+                    labels: labels.map(function(d) { var dt = new Date(d); return (dt.getMonth()+1) + '/' + dt.getDate(); }),
+                    datasets: [{ label: '{{ habit.name }}', data: values, borderColor: color, backgroundColor: color + '33', tension: 0.3, fill: true }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } }
+            });
+        });
+}
+{% endif %}
+
+{% if habit.visual_model_type == 'percentage' %}
+function initPieChart() {
+    var current = {{ habit.visual_settings.get('current_value', 0) }};
+    var max = {{ habit.visual_settings.get('max_value', 100) }};
+    var remaining = Math.max(0, max - current);
+    var ctx = document.getElementById('pieChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Completed', 'Remaining'],
+                datasets: [{
+                    data: [current, remaining],
+                    backgroundColor: ['{{ habit.visual_settings.get("theme_color", "#10b981") }}', '#e2e8f0'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+}
+{% endif %}
+
+{% if habit.visual_model_type == 'calendar' %}
+var currentCalendarDate = new Date();
+var habitId = {{ habit.id }};
+var selectedDate = null;
+var activityTypesData = {{ habit.visual_settings.get('activity_types', [])|tojson }};
+
+function initCalendar() {
+    renderCalendar();
+    document.getElementById('prevMonth').addEventListener('click', function() {
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+        renderCalendar();
+    });
+    document.getElementById('nextMonth').addEventListener('click', function() {
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+        renderCalendar();
+    });
+}
+
+function renderCalendar() {
+    var calendarView = document.getElementById('calendarView');
+    var currentMonth = document.getElementById('currentMonth');
+    var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var year = currentCalendarDate.getFullYear();
+    var month = currentCalendarDate.getMonth();
+    currentMonth.textContent = monthNames[month] + ' ' + year;
+    var firstDay = new Date(year, month, 1).getDay();
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
+    var today = new Date();
+    
+    var existingDays = calendarView.querySelectorAll('.calendar-day:not(.fw-bold)');
+    existingDays.forEach(function(el) { el.remove(); });
+    
+    for (var i = 0; i < firstDay; i++) {
+        var emptyDay = document.createElement('div');
+        emptyDay.className = 'calendar-day';
+        calendarView.appendChild(emptyDay);
+    }
+    
+    fetch('/tracking/api/' + habitId + '/data')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var recordDays = {};
+            data.records.forEach(function(rec) {
+                var d = new Date(rec.date);
+                if (d.getFullYear() === year && d.getMonth() === month) {
+                    var day = d.getDate();
+                    if (!recordDays[day]) recordDays[day] = [];
+                    recordDays[day].push({
+                        value: rec.numerical_value,
+                        desc: rec.description || '',
+                        activity: rec.activity_type || '',
+                        time: rec.time_spent || 0
+                    });
+                }
+            });
+            for (var day = 1; day <= daysInMonth; day++) {
+                var dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.dataset.day = day;
+                
+                var numEl = document.createElement('div');
+                numEl.className = 'day-number';
+                numEl.textContent = day;
+                dayElement.appendChild(numEl);
+                
+                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) dayElement.classList.add('today');
+                
+                var activities = recordDays[day] || [];
+                if (activities.length > 0) {
+                    dayElement.classList.add('has-record');
+                    dayElement.style.background = 'linear-gradient(135deg, ' + '{{ habit.visual_settings.get("theme_color", "#10b981") }}' + 'cc, ' + '{{ habit.visual_settings.get("theme_color", "#10b981") }}' + ')';
+                    dayElement.style.color = 'white';
+                    
+                    var activitiesDiv = document.createElement('div');
+                    activitiesDiv.className = 'day-activities';
+                    var maxShow = 4;
+                    var showCount = Math.min(activities.length, maxShow);
+                    for (var a = 0; a < showCount; a++) {
+                        var actEl = document.createElement('div');
+                        actEl.className = 'day-activity';
+                        var label = activities[a].activity || activities[a].desc || (activities[a].value + ' ' + '{{ habit.visual_settings.get("unit", "") }}');
+                        if (label.length > 12) label = label.substring(0, 11) + '\u2026';
+                        actEl.textContent = label;
+                        actEl.title = activities[a].activity + (activities[a].desc ? ' - ' + activities[a].desc : '') + ' (' + activities[a].value + ')';
+                        activitiesDiv.appendChild(actEl);
+                    }
+                    if (activities.length > maxShow) {
+                        var moreEl = document.createElement('div');
+                        moreEl.className = 'day-more';
+                        moreEl.textContent = '(+ ' + (activities.length - maxShow) + ')';
+                        activitiesDiv.appendChild(moreEl);
+                    }
+                    dayElement.appendChild(activitiesDiv);
+                }
+                
+                dayElement.addEventListener('click', function() {
+                    var d = this.dataset.day;
+                    if (!d) return;
+                    var dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+                    selectedDate = dateStr;
+                    document.getElementById('quickAddDate').textContent = monthNames[month] + ' ' + d + ', ' + year;
+                    document.getElementById('quickAddValue').value = 1;
+                    document.getElementById('quickAddDesc').value = '';
+                    new bootstrap.Modal(document.getElementById('quickAddModal')).show();
+                });
+                calendarView.appendChild(dayElement);
+            }
+        })
+        .catch(function() {
+            for (var day = 1; day <= daysInMonth; day++) {
+                var dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.textContent = day;
+                dayElement.dataset.day = day;
+                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) dayElement.classList.add('today');
+                dayElement.addEventListener('click', function() {
+                    var d = this.dataset.day;
+                    if (!d) return;
+                    selectedDate = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+                    document.getElementById('quickAddDate').textContent = monthNames[month] + ' ' + d + ', ' + year;
+                    document.getElementById('quickAddValue').value = 1;
+                    document.getElementById('quickAddDesc').value = '';
+                    new bootstrap.Modal(document.getElementById('quickAddModal')).show();
+                });
+                calendarView.appendChild(dayElement);
+            }
+        });
+}
+
+function submitQuickAdd() {
+    var activitySelect = document.getElementById('quickAddActivity');
+    var data = {
+        numerical_value: parseFloat(document.getElementById('quickAddValue').value) || 1,
+        description: document.getElementById('quickAddDesc').value,
+        date: selectedDate,
+        activity_type: activitySelect ? activitySelect.value : ''
+    };
+    fetch('/tracking/api/' + habitId + '/quick-add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(result) {
+        if (result.success) location.reload();
+        else alert('Error: ' + (result.error || 'Unknown'));
+    });
+}
+{% endif %}
+
+function initDragReorder() {
+    var tbody = document.getElementById('recordsBody');
+    if (!tbody) return;
+    var draggedRow = null;
+    
+    tbody.querySelectorAll('.record-row').forEach(function(row) {
+        row.addEventListener('dragstart', function(e) {
+            draggedRow = this;
+            this.style.opacity = '0.5';
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        row.addEventListener('dragend', function() {
+            this.style.opacity = '1';
+            tbody.querySelectorAll('.record-row').forEach(function(r) { r.classList.remove('drag-over'); });
+        });
+        row.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            this.classList.add('drag-over');
+        });
+        row.addEventListener('dragleave', function() {
+            this.classList.remove('drag-over');
+        });
+        row.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            if (draggedRow !== this) {
+                tbody.insertBefore(draggedRow, this);
+                var ids = [];
+                tbody.querySelectorAll('.record-row').forEach(function(r) { ids.push(r.dataset.recordId); });
+                fetch('/tracking/api/{{ habit.id }}/reorder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ record_ids: ids })
+                });
+            }
+        });
+    });
+}
+</script>
+{% endblock %}

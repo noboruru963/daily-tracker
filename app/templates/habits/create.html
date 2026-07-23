@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}Create Habit - Daily{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6">
+                <i class="bi bi-plus-circle me-2"></i>Create New Habit
+            </h1>
+            <p class="text-muted">Choose a visual model and customize your habit tracking</p>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('habits.create_habit') }}">
+        <div class="row">
+            <!-- Left Column: Basic Info -->
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-info-circle me-2"></i>Basic Information
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Habit Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" required placeholder="e.g., Morning Exercise">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="What is this habit about?"></textarea>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="is_public" name="is_public">
+                            <label class="form-check-label" for="is_public">Make this habit public</label>
+                            <div class="form-text">Share your progress with the community</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Customization Panel -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-palette me-2"></i>Customization
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Theme Color</label>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <div class="color-option" style="background-color: #10b981;" data-color="#10b981"></div>
+                                <div class="color-option" style="background-color: #0ea5e9;" data-color="#0ea5e9"></div>
+                                <div class="color-option" style="background-color: #6366f1;" data-color="#6366f1"></div>
+                                <div class="color-option" style="background-color: #f59e0b;" data-color="#f59e0b"></div>
+                                <div class="color-option" style="background-color: #ef4444;" data-color="#ef4444"></div>
+                                <div class="color-option" style="background-color: #8b5cf6;" data-color="#8b5cf6"></div>
+                                <div class="color-option" style="background-color: #ec4899;" data-color="#ec4899"></div>
+                                <div class="color-option" style="background-color: #14b8a6;" data-color="#14b8a6"></div>
+                                <div class="color-option" style="background-color: #f97316;" data-color="#f97316"></div>
+                                <div class="color-option" style="background-color: #84cc16;" data-color="#84cc16"></div>
+                            </div>
+                            <input type="hidden" id="theme_color" name="theme_color" value="#10b981">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Icon</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <div class="icon-option btn btn-outline-secondary active" data-icon="house"><i class="bi bi-house"></i></div>
+                                <div class="icon-option btn btn-outline-secondary" data-icon="book"><i class="bi bi-book"></i></div>
+                                <div class="icon-option btn btn-outline-secondary" data-icon="dumbbell"><i class="bi bi-dumbbell"></i></div>
+                                <div class="icon-option btn btn-outline-secondary" data-icon="heart"><i class="bi bi-heart"></i></div>
+                                <div class="icon-option btn btn-outline-secondary" data-icon="star"><i class="bi bi-star"></i></div>
+                                <div class="icon-option btn btn-outline-secondary" data-icon="egg-fried"><i class="bi bi-egg-fried"></i></div>
+                                <div class="icon-option btn btn-outline-secondary" data-icon="bicycle"><i class="bi bi-bicycle"></i></div>
+                                <div class="icon-option btn btn-outline-secondary" data-icon="controller"><i class="bi bi-controller"></i></div>
+                                <div class="icon-option btn btn-outline-secondary" data-icon="pen"><i class="bi bi-pen"></i></div>
+                                <div class="icon-option btn btn-outline-secondary" data-icon="laptop"><i class="bi bi-laptop"></i></div>
+                                <div class="icon-option btn btn-outline-secondary" data-icon="moon-stars"><i class="bi bi-moon-stars"></i></div>
+                                <div class="icon-option btn btn-outline-secondary" data-icon="droplet"><i class="bi bi-droplet"></i></div>
+                                <div class="icon-option btn btn-outline-secondary" data-icon="music-note"><i class="bi bi-music-note"></i></div>
+                                <div class="icon-option btn btn-outline-secondary" data-icon="brush"><i class="bi bi-brush"></i></div>
+                            </div>
+                            <input type="hidden" id="habit_icon" name="habit_icon" value="house">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Visual Model Selection -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-eye me-2"></i>Choose Visual Model *
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-4">Select how you want to visualize and track your habit data</p>
+                        
+                        <div class="row">
+                            {% for model_key, model_info in visual_models.items() %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card visual-model-card h-100" data-model="{{ model_key }}">
+                                    <div class="card-body text-center">
+                                        <div class="visual-model-icon text-primary">
+                                            <i class="bi bi-{{ model_info.icon }}"></i>
+                                        </div>
+                                        <h5 class="card-title">{{ model_info.name }}</h5>
+                                        <p class="card-text text-muted">{{ model_info.description }}</p>
+                                        
+                                        {% if model_key == 'graph' %}
+                                        <small class="text-success">
+                                            <i class="bi bi-check-circle me-1"></i>Best for: Weight lifting, gardening, quitting bad habits
+                                        </small>
+                                        {% elif model_key == 'progression' %}
+                                        <small class="text-success">
+                                            <i class="bi bi-check-circle me-1"></i>Best for: Projects, building something, baking
+                                        </small>
+                                        {% elif model_key == 'calendar' %}
+                                        <small class="text-success">
+                                            <i class="bi bi-check-circle me-1"></i>Best for: Sports sessions, courses, events
+                                        </small>
+                                        {% elif model_key == 'percentage' %}
+                                        <small class="text-success">
+                                            <i class="bi bi-check-circle me-1"></i>Best for: Big targets, overall progression
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                    <input type="radio" name="visual_model_type" value="{{ model_key }}" class="d-none" {{ 'checked' if model_key == 'graph' }}>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Visual Model Settings -->
+                <div class="card mb-4" id="visual-settings">
+                    <div class="card-header">
+                        <i class="bi bi-gear me-2"></i>Visual Model Settings
+                    </div>
+                    <div class="card-body">
+                        <!-- Graph Settings -->
+                        <div id="graph-settings" class="visual-model-settings">
+                            <h6><i class="bi bi-graph-up me-2"></i>Graph Settings</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Graph Type</label>
+                                    <select class="form-select" name="graph_type">
+                                        <option value="line">Line Chart</option>
+                                        <option value="bar">Bar Chart</option>
+                                        <option value="area">Area Chart</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Time Range</label>
+                                    <select class="form-select" name="time_range">
+                                        <option value="7">Last 7 days</option>
+                                        <option value="30" selected>Last 30 days</option>
+                                        <option value="90">Last 90 days</option>
+                                        <option value="365">Last year</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Progression Settings -->
+                        <div id="progression-settings" class="visual-model-settings" style="display: none;">
+                            <h6><i class="bi bi-layers me-2"></i>Progression Steps</h6>
+                            <div id="steps-container">
+                                <div class="mb-2 step-entry">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="step_name[]" placeholder="Step 1 name">
+                                        <button type="button" class="btn btn-outline-danger remove-step"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                    <input type="text" class="form-control mt-1" name="step_desc[]" placeholder="Step 1 description (optional)" style="font-size: 0.85rem;">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="add-step">
+                                <i class="bi bi-plus me-1"></i>Add Step
+                            </button>
+                        </div>
+                        
+                        <!-- Calendar Settings -->
+                        <div id="calendar-settings" class="visual-model-settings" style="display: none;">
+                            <h6><i class="bi bi-calendar me-2"></i>Calendar Settings</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Schedule</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="monday" id="monday">
+                                        <label class="form-check-label" for="monday">Monday</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="tuesday" id="tuesday">
+                                        <label class="form-check-label" for="tuesday">Tuesday</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="wednesday" id="wednesday">
+                                        <label class="form-check-label" for="wednesday">Wednesday</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="thursday" id="thursday">
+                                        <label class="form-check-label" for="thursday">Thursday</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="friday" id="friday">
+                                        <label class="form-check-label" for="friday">Friday</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="saturday" id="saturday">
+                                        <label class="form-check-label" for="saturday">Saturday</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="sunday" id="sunday">
+                                        <label class="form-check-label" for="sunday">Sunday</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Reminder Time</label>
+                                    <input type="time" class="form-control" name="reminder_time" value="09:00">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Percentage Settings -->
+                        <div id="percentage-settings" class="visual-model-settings" style="display: none;">
+                            <h6><i class="bi bi-percent me-2"></i>Percentage Settings</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label">Minimum Value</label>
+                                    <input type="number" class="form-control" name="min_value" value="0">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Maximum Value</label>
+                                    <input type="number" class="form-control" name="max_value" value="100">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Starting Value</label>
+                                    <input type="number" class="form-control" name="current_value" value="0">
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <label class="form-label">Unit</label>
+                                <input type="text" class="form-control" name="unit" placeholder="e.g., pages, minutes, km">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-check-circle me-2"></i>Create Habit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Visual model selection
+        const visualModelCards = document.querySelectorAll('.visual-model-card');
+        visualModelCards.forEach(card => {
+            card.addEventListener('click', function() {
+                // Remove selected class from all cards
+                visualModelCards.forEach(c => c.classList.remove('selected'));
+                // Add selected class to clicked card
+                this.classList.add('selected');
+                // Check the radio button
+                this.querySelector('input[type="radio"]').checked = true;
+                
+                // Show/hide settings
+                const modelType = this.dataset.model;
+                document.querySelectorAll('.visual-model-settings').forEach(settings => {
+                    settings.style.display = 'none';
+                });
+                document.getElementById(modelType + '-settings').style.display = 'block';
+            });
+        });
+        
+        // Select first card by default
+        document.querySelector('.visual-model-card').classList.add('selected');
+        
+        // Color selection
+        const colorOptions = document.querySelectorAll('.color-option');
+        colorOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                colorOptions.forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                document.getElementById('theme_color').value = this.dataset.color;
+            });
+        });
+        
+        // Icon selection
+        const iconOptions = document.querySelectorAll('.icon-option');
+        iconOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                iconOptions.forEach(o => o.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById('habit_icon').value = this.dataset.icon;
+            });
+        });
+        
+        // Add step button
+        document.getElementById('add-step').addEventListener('click', function() {
+            const stepsContainer = document.getElementById('steps-container');
+            const stepCount = stepsContainer.querySelectorAll('.step-entry').length + 1;
+            
+            const stepHtml = `
+                <div class="mb-2 step-entry">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="step_name[]" placeholder="Step ${stepCount} name">
+                        <button type="button" class="btn btn-outline-danger remove-step"><i class="bi bi-trash"></i></button>
+                    </div>
+                    <input type="text" class="form-control mt-1" name="step_desc[]" placeholder="Step ${stepCount} description (optional)" style="font-size: 0.85rem;">
+                </div>
+            `;
+            
+            stepsContainer.insertAdjacentHTML('beforeend', stepHtml);
+            
+            const removeBtn = stepsContainer.lastElementChild.querySelector('.remove-step');
+            removeBtn.addEventListener('click', function() {
+                this.closest('.step-entry').remove();
+            });
+        });
+        
+        // Remove step button
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-step')) {
+                e.target.closest('.input-group').remove();
+            }
+        });
+    });
+</script>
+{% endblock %}

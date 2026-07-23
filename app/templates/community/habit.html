@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}{{ habit.name }} - Community - Daily{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('community.index') }}">Community</a></li>
+                    <li class="breadcrumb-item active">{{ habit.name }}</li>
+                </ol>
+            </nav>
+            <h1 class="display-6 fw-bold" style="color: {{ habit.visual_settings.get('theme_color', '#10b981') }};">
+                <i class="bi bi-{{ habit.visual_settings.get('icon', 'house') }} me-2"></i>{{ habit.name }}
+            </h1>
+            <p class="text-muted">{{ habit.description or 'No description' }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Visual Model Display -->
+            <div class="card mb-4">
+                <div class="card-header" style="border-top: 3px solid {{ habit.visual_settings.get('theme_color', '#10b981') }};">
+                    <i class="bi bi-eye me-2"></i>{{ habit.visual_model_type|capitalize }} View
+                </div>
+                <div class="card-body">
+                    {% if habit.visual_model_type == 'graph' %}
+                    <div class="graph-container">
+                        <canvas id="habitGraph"></canvas>
+                    </div>
+                    
+                    {% elif habit.visual_model_type == 'progression' %}
+                    <div class="progression-view">
+                        {% set steps = habit.visual_settings.get('steps', []) %}
+                        {% set current_step = habit.visual_settings.get('current_step', 0) %}
+                        <div class="step-progress">
+                            <div class="progress-bar" style="width: {{ (current_step / steps|length * 100) if steps|length > 0 else 0 }}%; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></div>
+                            {% for step in steps %}
+                            <div class="step-item {{ 'completed' if loop.index0 < current_step else ('current' if loop.index0 == current_step else '') }}" style="{% if loop.index0 <= current_step %}background: {{ habit.visual_settings.get('theme_color', '#10b981') }};{% endif %}">{{ loop.index }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-4">
+                            <h5>Current Step: {{ steps[current_step].name if current_step < steps|length else 'Completed' }}</h5>
+                        </div>
+                    </div>
+                    
+                    {% elif habit.visual_model_type == 'calendar' %}
+                    <div class="calendar-view">
+                        <h5>Schedule</h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for day in habit.visual_settings.get('schedule', []) %}
+                            <span class="badge" style="background: {{ habit.visual_settings.get('theme_color', '#10b981') }};">{{ day|capitalize }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    {% elif habit.visual_model_type == 'percentage' %}
+                    <div class="percentage-view text-center">
+                        {% set current = habit.visual_settings.get('current_value', 0) %}
+                        {% set min_val = habit.visual_settings.get('min_value', 0) %}
+                        {% set max_val = habit.visual_settings.get('max_value', 100) %}
+                        {% set percentage = ((current - min_val) / (max_val - min_val) * 100) if max_val > min_val else 0 %}
+                        <div class="percentage-display">{{ percentage|round }}%</div>
+                        <div class="progress mt-4" style="height: 30px;">
+                            <div class="progress-bar" style="width: {{ percentage }}%; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></div>
+                        </div>
+                        <div class="row mt-4">
+                            <div class="col-md-4"><div class="stat-card"><div class="stat-value" style="color: {{ habit.visual_settings.get('theme_color', '#10b981') }};">{{ current }}</div><div class="stat-label">Current</div></div></div>
+                            <div class="col-md-4"><div class="stat-card"><div class="stat-value" style="color: var(--success);">{{ max_val }}</div><div class="stat-label">Target</div></div></div>
+                            <div class="col-md-4"><div class="stat-card"><div class="stat-value" style="color: var(--warning);">{{ max_val - current }}</div><div class="stat-label">Remaining</div></div></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Community Posts -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-chat-dots me-2"></i>Community Posts
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('community.share_habit', habit_id=habit.id) }}" class="mb-4">
+                        <div class="mb-3">
+                            <textarea class="form-control" name="content" rows="3" placeholder="Share your thoughts about this habit..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="bi bi-send me-2"></i>Post
+                        </button>
+                    </form>
+                    
+                    {% if posts %}
+                    {% for post in posts %}
+                    <div class="post-card">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px; font-size: 0.85rem; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};">
+                                {{ post.user.username[0].upper() }}
+                            </div>
+                            <div>
+                                <strong>{{ post.user.username }}</strong>
+                                <small class="text-muted ms-2">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </div>
+                        </div>
+                        <p class="mb-2 ms-5">{{ post.content }}</p>
+                        
+                        <div class="d-flex gap-2 ms-5 align-items-center">
+                            <!-- Like Button - Oval -->
+                            <form method="POST" action="{{ url_for('community.like_post', post_id=post.id) }}" class="d-inline">
+                                <button type="submit" class="btn-like {{ 'liked' if post.likes|selectattr('user_id','equalto',current_user.id)|list|length > 0 }}">
+                                    <i class="bi bi-hand-thumbs-up"></i>
+                                    <span class="like-count">{{ post.likes|length }}</span>
+                                </button>
+                            </form>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#comments{{ post.id }}">
+                                <i class="bi bi-chat me-1"></i>{{ post.comments|length }}
+                            </button>
+                            <form method="POST" action="{{ url_for('community.report_post', post_id=post.id) }}" class="d-inline">
+                                <input type="hidden" name="reason" value="Reported by user">
+                                <button type="submit" class="btn btn-sm btn-outline-danger btn-report" title="Report this post">
+                                    <i class="bi bi-flag me-1"></i>Report
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Comments Section -->
+                        <div class="collapse mt-3 ms-5" id="comments{{ post.id }}">
+                            <hr>
+                            {% for comment in post.comments %}
+                            <div class="d-flex mb-2">
+                                <div class="flex-shrink-0">
+                                    <div class="text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.7rem; background: var(--secondary);">
+                                        {{ comment.user.username[0].upper() }}
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-2">
+                                    <div class="bg-light rounded p-2">
+                                        <strong style="font-size: 0.85rem;">{{ comment.user.username }}</strong>
+                                        <small class="text-muted ms-2">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        <p class="mb-0 mt-1">{{ comment.content }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            
+                            <form method="POST" action="{{ url_for('community.add_comment', post_id=post.id) }}" class="mt-3">
+                                <div class="input-group input-group-sm">
+                                    <input type="text" class="form-control" name="content" placeholder="Write a reply...">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-send"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-chat text-muted" style="font-size: 2rem;"></i>
+                        <p class="mt-2 text-muted">No posts yet. Be the first to share!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; font-size: 2rem; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};">
+                        {{ habit.user.username[0].upper() }}
+                    </div>
+                    <h5>{{ habit.user.username }}</h5>
+                    <p class="text-muted">Member since {{ habit.user.created_at.strftime('%B %Y') }}</p>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header"><i class="bi bi-info-circle me-2"></i>Habit Info</div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex justify-content-between mb-2"><span class="text-muted">Type:</span><span class="badge" style="background: {{ habit.visual_settings.get('theme_color', '#10b981') }};">{{ habit.visual_model_type|capitalize }}</span></li>
+                        <li class="d-flex justify-content-between mb-2"><span class="text-muted">Created:</span><span>{{ habit.created_at.strftime('%Y-%m-%d') }}</span></li>
+                        <li class="d-flex justify-content-between"><span class="text-muted">Visibility:</span><span class="badge bg-success">Public</span></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Use as Template -->
+            {% if habit.user_id != current_user.id %}
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-clipboard-plus mb-2" style="font-size: 2rem; color: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></i>
+                    <h6>Like this habit?</h6>
+                    <p class="text-muted" style="font-size: 0.85rem;">Copy it to your dashboard and customize it.</p>
+                    <form method="POST" action="{{ url_for('community.copy_habit', habit_id=habit.id) }}">
+                        <button type="submit" class="btn btn-success btn-template w-100">
+                            <i class="bi bi-clipboard-plus me-1"></i>Use as Template
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if habit.visual_model_type == 'graph' %}
+        initHabitGraph();
+    {% endif %}
+});
+
+{% if habit.visual_model_type == 'graph' %}
+function initHabitGraph() {
+    fetch('/tracking/api/{{ habit.id }}/data')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var ctx = document.getElementById('habitGraph').getContext('2d');
+            var labels = data.chart_data.labels.length > 0 ? data.chart_data.labels : ['No data'];
+            var values = data.chart_data.values.length > 0 ? data.chart_data.values : [0];
+            var color = data.habit.visual_settings && data.habit.visual_settings.theme_color ? data.habit.visual_settings.theme_color : '#10b981';
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.map(function(d) { var dt = new Date(d); return (dt.getMonth()+1) + '/' + dt.getDate(); }),
+                    datasets: [{ label: '{{ habit.name }}', data: values, borderColor: color, backgroundColor: color + '33', tension: 0.3, fill: true }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } }
+            });
+        });
+}
+{% endif %}
+</script>
+{% endblock %}

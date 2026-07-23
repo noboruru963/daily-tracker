@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Daily{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold">
+                <i class="bi bi-gear me-2"></i>Settings
+            </h1>
+            <p class="text-muted">Customize your experience</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Appearance -->
+            <form method="POST" action="{{ url_for('settings.settings_page') }}">
+                <input type="hidden" name="action" value="general">
+                <div class="settings-section">
+                    <h5><i class="bi bi-palette me-2"></i>Appearance</h5>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Theme</label>
+                        <div class="row">
+                            {% for theme_key, theme_name in [('light', 'Light'), ('dark', 'Dark')] %}
+                            <div class="col-4 col-md-2 mb-2">
+                                <div class="theme-option {{ 'active' if settings.theme == theme_key }}" data-theme="{{ theme_key }}">
+                                    <input type="radio" name="theme" value="{{ theme_key }}" class="d-none" {{ 'checked' if settings.theme == theme_key }}>
+                                    <div class="mb-1">
+                                        {% if theme_key == 'light' %}
+                                        <i class="bi bi-sun fs-4 text-warning"></i>
+                                        {% elif theme_key == 'dark' %}
+                                        <i class="bi bi-moon fs-4 text-secondary"></i>
+                                        {% endif %}
+                                    </div>
+                                    <small>{{ theme_name }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Primary Color</label>
+                        <div class="d-flex gap-3 flex-wrap">
+                            {% for color in ['#10b981', '#059669', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#ec4899', '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#14b8a6'] %}
+                            <div class="color-option {{ 'selected' if settings.primary_color == color }}" style="background-color: {{ color }};" data-color="{{ color }}"></div>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" id="primary_color" name="primary_color" value="{{ settings.primary_color }}">
+                        <div class="form-text">Changes apply to buttons, links, progress bars, and accents across the site.</div>
+                    </div>
+                </div>
+                
+                <!-- Dashboard -->
+                <div class="settings-section">
+                    <h5><i class="bi bi-grid-1x2 me-2"></i>Dashboard</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Layout</label>
+                            <div class="d-flex gap-3">
+                                <div class="theme-option {{ 'active' if settings.dashboard_layout == 'grid' }}" data-layout="grid" style="flex: 1;">
+                                    <input type="radio" name="dashboard_layout" value="grid" class="d-none" {{ 'checked' if settings.dashboard_layout == 'grid' }}>
+                                    <i class="bi bi-grid-3x3-gap fs-4"></i>
+                                    <div><small>Grid</small></div>
+                                </div>
+                                <div class="theme-option {{ 'active' if settings.dashboard_layout == 'list' }}" data-layout="list" style="flex: 1;">
+                                    <input type="radio" name="dashboard_layout" value="list" class="d-none" {{ 'checked' if settings.dashboard_layout == 'list' }}>
+                                    <i class="bi bi-list fs-4"></i>
+                                    <div><small>List</small></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Habits Per Page</label>
+                            <select class="form-select" name="habits_per_page">
+                                {% for n in [6, 12, 18, 24] %}
+                                <option value="{{ n }}" {{ 'selected' if settings.habits_per_page == n }}>{{ n }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notifications -->
+                <div class="settings-section">
+                    <h5><i class="bi bi-bell me-2"></i>Notifications</h5>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="email_notifications" name="email_notifications" {{ 'checked' if settings.email_notifications }}>
+                            <label class="form-check-label" for="email_notifications">Email Notifications</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Reminder Time</label>
+                        <input type="time" class="form-control" name="reminder_time" value="{{ settings.reminder_time or '09:00' }}" style="max-width: 200px;">
+                    </div>
+                </div>
+                
+                <!-- Privacy -->
+                <div class="settings-section">
+                    <h5><i class="bi bi-shield-lock me-2"></i>Privacy</h5>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Default Habit Visibility</label>
+                        <select class="form-select" name="default_habit_visibility" style="max-width: 300px;">
+                            <option value="private" {{ 'selected' if settings.default_habit_visibility == 'private' }}>Private</option>
+                            <option value="public" {{ 'selected' if settings.default_habit_visibility == 'public' }}>Public</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="d-grid mb-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Save Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Right Column: Account -->
+        <div class="col-lg-4">
+            <!-- Profile Picture -->
+            <div class="settings-section">
+                <h5><i class="bi bi-camera me-2"></i>Profile Picture</h5>
+                <div class="text-center mb-3">
+                    {% if current_user.profile_picture %}
+                    <img src="{{ current_user.profile_picture }}" alt="Profile" class="rounded-circle mb-2" style="width: 80px; height: 80px; object-fit: cover;">
+                    {% else %}
+                    <div class="text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 80px; height: 80px; font-size: 2rem; background: {{ settings.primary_color or '#10b981' }};">
+                        {{ current_user.username[0].upper() }}
+                    </div>
+                    {% endif %}
+                </div>
+                <form method="POST" action="{{ url_for('settings.settings_page') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="action" value="profile_picture">
+                    <div class="mb-3">
+                        <input type="file" class="form-control" name="profile_picture" accept="image/png,image/jpeg,image/jpg,image/gif">
+                        <div class="form-text">PNG, JPG, or GIF. Max 5MB.</div>
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="bi bi-upload me-1"></i>Upload Picture
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Username -->
+            <div class="settings-section">
+                <h5><i class="bi bi-person me-2"></i>Username</h5>
+                <p class="text-muted mb-2"><small>Current: <strong>{{ current_user.username }}</strong></small></p>
+                <form method="POST" action="{{ url_for('settings.settings_page') }}">
+                    <input type="hidden" name="action" value="username">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" name="new_username" value="{{ current_user.username }}" minlength="3" required>
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="bi bi-check-circle me-1"></i>Update Username
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Account Info -->
+            <div class="settings-section">
+                <h5><i class="bi bi-info-circle me-2"></i>Account Info</h5>
+                <p class="text-muted mb-0"><small>Email: {{ current_user.email }}</small></p>
+                <p class="text-muted mb-0"><small>Member since {{ current_user.created_at.strftime('%B %Y') }}</small></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.theme-option[data-theme]').forEach(function(opt) {
+        opt.addEventListener('click', function() {
+            document.querySelectorAll('.theme-option[data-theme]').forEach(function(o) { o.classList.remove('active'); });
+            this.classList.add('active');
+            this.querySelector('input[type="radio"]').checked = true;
+        });
+    });
+    
+    document.querySelectorAll('.theme-option[data-layout]').forEach(function(opt) {
+        opt.addEventListener('click', function() {
+            document.querySelectorAll('.theme-option[data-layout]').forEach(function(o) { o.classList.remove('active'); });
+            this.classList.add('active');
+            this.querySelector('input[type="radio"]').checked = true;
+        });
+    });
+    
+    document.querySelectorAll('.color-option').forEach(function(opt) {
+        opt.addEventListener('click', function() {
+            document.querySelectorAll('.color-option').forEach(function(o) { o.classList.remove('selected'); });
+            this.classList.add('selected');
+            document.getElementById('primary_color').value = this.dataset.color;
+        });
+    });
+});
+</script>
+{% endblock %}

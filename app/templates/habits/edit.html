@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ habit.name }} - Daily{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('habits.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('habits.view_habit', habit_id=habit.id) }}">{{ habit.name }}</a></li>
+                    <li class="breadcrumb-item active">Edit</li>
+                </ol>
+            </nav>
+            <h1 class="display-6 fw-bold">
+                <i class="bi bi-pencil me-2"></i>Edit Habit
+            </h1>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('habits.edit_habit', habit_id=habit.id) }}">
+        <div class="row">
+            <!-- Left Column: Basic Info -->
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-info-circle me-2"></i>Basic Information
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Habit Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ habit.name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ habit.description or '' }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="is_public" name="is_public" {{ 'checked' if habit.is_public }}>
+                            <label class="form-check-label" for="is_public">Make this habit public</label>
+                            <div class="form-text">Share your progress with the community</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Customization Panel -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-palette me-2"></i>Customization
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Theme Color</label>
+                            <div class="d-flex gap-2 flex-wrap">
+                                {% for color in ['#10b981', '#0ea5e9', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#84cc16'] %}
+                                <div class="color-option {{ 'selected' if habit.visual_settings.get('theme_color', '#10b981') == color }}" style="background-color: {{ color }};" data-color="{{ color }}"></div>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" id="theme_color" name="theme_color" value="{{ habit.visual_settings.get('theme_color', '#10b981') }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Icon</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for icon_name, icon_bi in [('house', 'house'), ('book', 'book'), ('dumbbell', 'dumbbell'), ('heart', 'heart'), ('star', 'star'), ('egg-fried', 'egg-fried'), ('bicycle', 'bicycle'), ('controller', 'controller'), ('pen', 'pen'), ('laptop', 'laptop'), ('moon-stars', 'moon-stars'), ('droplet', 'droplet'), ('music-note', 'music-note'), ('brush', 'brush')] %}
+                                <div class="icon-option btn btn-outline-secondary {{ 'active' if habit.visual_settings.get('icon', 'house') == icon_name }}" data-icon="{{ icon_name }}">
+                                    <i class="bi bi-{{ icon_bi }}"></i>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" id="habit_icon" name="habit_icon" value="{{ habit.visual_settings.get('icon', 'house') }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Visual Model Settings -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-gear me-2"></i>Visual Model Settings
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Visual model type cannot be changed after creation. You can only modify settings for the current model.
+                        </div>
+                        
+                        {% if habit.visual_model_type == 'graph' %}
+                        <div id="graph-settings">
+                            <h6><i class="bi bi-graph-up me-2"></i>Graph Settings</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Graph Type</label>
+                                    <select class="form-select" name="graph_type">
+                                        <option value="line" {{ 'selected' if habit.visual_settings.get('graph_type', 'line') == 'line' }}>Line Chart</option>
+                                        <option value="bar" {{ 'selected' if habit.visual_settings.get('graph_type', 'line') == 'bar' }}>Bar Chart</option>
+                                        <option value="area" {{ 'selected' if habit.visual_settings.get('graph_type', 'line') == 'area' }}>Area Chart</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Time Range</label>
+                                    <select class="form-select" name="time_range">
+                                        <option value="7" {{ 'selected' if habit.visual_settings.get('time_range', 30) == 7 }}>Last 7 days</option>
+                                        <option value="30" {{ 'selected' if habit.visual_settings.get('time_range', 30) == 30 }}>Last 30 days</option>
+                                        <option value="90" {{ 'selected' if habit.visual_settings.get('time_range', 30) == 90 }}>Last 90 days</option>
+                                        <option value="365" {{ 'selected' if habit.visual_settings.get('time_range', 30) == 365 }}>Last year</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% elif habit.visual_model_type == 'progression' %}
+                        <div id="progression-settings">
+                            <h6><i class="bi bi-layers me-2"></i>Progression Steps</h6>
+                            <div id="steps-container">
+                                {% for step in habit.visual_settings.get('steps', []) %}
+                                <div class="mb-2 step-entry">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="step_name[]" value="{{ step.name }}" placeholder="Step {{ loop.index }}">
+                                        <button type="button" class="btn btn-outline-danger remove-step"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                    <input type="text" class="form-control mt-1" name="step_desc[]" value="{{ step.get('description', '') }}" placeholder="Step {{ loop.index }} description (optional)" style="font-size: 0.85rem;">
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="add-step">
+                                <i class="bi bi-plus me-1"></i>Add Step
+                            </button>
+                        </div>
+                        
+                        {% elif habit.visual_model_type == 'calendar' %}
+                        <div id="calendar-settings">
+                            <h6><i class="bi bi-calendar me-2"></i>Calendar Settings</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Schedule</label>
+                                    {% set schedule = habit.visual_settings.get('schedule', []) %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="monday" id="monday" {{ 'checked' if 'monday' in schedule }}>
+                                        <label class="form-check-label" for="monday">Monday</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="tuesday" id="tuesday" {{ 'checked' if 'tuesday' in schedule }}>
+                                        <label class="form-check-label" for="tuesday">Tuesday</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="wednesday" id="wednesday" {{ 'checked' if 'wednesday' in schedule }}>
+                                        <label class="form-check-label" for="wednesday">Wednesday</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="thursday" id="thursday" {{ 'checked' if 'thursday' in schedule }}>
+                                        <label class="form-check-label" for="thursday">Thursday</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="friday" id="friday" {{ 'checked' if 'friday' in schedule }}>
+                                        <label class="form-check-label" for="friday">Friday</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="saturday" id="saturday" {{ 'checked' if 'saturday' in schedule }}>
+                                        <label class="form-check-label" for="saturday">Saturday</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="sunday" id="sunday" {{ 'checked' if 'sunday' in schedule }}>
+                                        <label class="form-check-label" for="sunday">Sunday</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Reminder Time</label>
+                                    <input type="time" class="form-control" name="reminder_time" value="{{ habit.visual_settings.get('reminder_time', '09:00') }}">
+                                    
+                                    <div class="mt-3">
+                                        <label class="form-label">Activity Types</label>
+                                        <div id="activity-types-container">
+                                            {% for atype in habit.visual_settings.get('activity_types', []) %}
+                                            <div class="mb-2 activity-type-entry">
+                                                <div class="input-group input-group-sm">
+                                                    <input type="text" class="form-control" name="activity_type_name[]" value="{{ atype.name }}" placeholder="Activity name">
+                                                    <input type="text" class="form-control" name="activity_type_icon[]" value="{{ atype.icon }}" placeholder="Icon" style="max-width: 80px;">
+                                                    <input type="color" class="form-control form-control-color" name="activity_type_color[]" value="{{ atype.color }}" style="max-width: 50px;">
+                                                    <button type="button" class="btn btn-outline-danger remove-activity-type"><i class="bi bi-trash"></i></button>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm" id="add-activity-type">
+                                            <i class="bi bi-plus me-1"></i>Add Activity Type
+                                        </button>
+                                        <div class="form-text">Icons: book, bicycle, pen, pen-fill, musical-note, cup-hot, mortarboard, controller, globe, camera, etc.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% elif habit.visual_model_type == 'percentage' %}
+                        <div id="percentage-settings">
+                            <h6><i class="bi bi-percent me-2"></i>Percentage Settings</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label">Minimum Value</label>
+                                    <input type="number" class="form-control" name="min_value" value="{{ habit.visual_settings.get('min_value', 0) }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Maximum Value</label>
+                                    <input type="number" class="form-control" name="max_value" value="{{ habit.visual_settings.get('max_value', 100) }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Current Value</label>
+                                    <input type="number" step="0.01" class="form-control" name="current_value" value="{{ habit.visual_settings.get('current_value', 0) }}">
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <label class="form-label">Unit</label>
+                                <input type="text" class="form-control" name="unit" value="{{ habit.visual_settings.get('unit', '') }}" placeholder="e.g., pages, minutes, km">
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('habits.view_habit', habit_id=habit.id) }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Color selection
+        document.querySelectorAll('.color-option').forEach(function(option) {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.color-option').forEach(function(o) { o.classList.remove('selected'); });
+                this.classList.add('selected');
+                document.getElementById('theme_color').value = this.dataset.color;
+            });
+        });
+        
+        // Icon selection
+        document.querySelectorAll('.icon-option').forEach(function(option) {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.icon-option').forEach(function(o) { o.classList.remove('active'); });
+                this.classList.add('active');
+                document.getElementById('habit_icon').value = this.dataset.icon;
+            });
+        });
+        
+        // Add step button
+        var addStepBtn = document.getElementById('add-step');
+        if (addStepBtn) {
+            addStepBtn.addEventListener('click', function() {
+                var stepsContainer = document.getElementById('steps-container');
+                var stepCount = stepsContainer.querySelectorAll('.step-entry').length + 1;
+                
+                var stepHtml = '<div class="mb-2 step-entry">' +
+                    '<div class="input-group">' +
+                    '<input type="text" class="form-control" name="step_name[]" placeholder="Step ' + stepCount + ' name">' +
+                    '<button type="button" class="btn btn-outline-danger remove-step"><i class="bi bi-trash"></i></button>' +
+                    '</div>' +
+                    '<input type="text" class="form-control mt-1" name="step_desc[]" placeholder="Step ' + stepCount + ' description (optional)" style="font-size: 0.85rem;">' +
+                    '</div>';
+                
+                stepsContainer.insertAdjacentHTML('beforeend', stepHtml);
+                stepsContainer.lastElementChild.querySelector('.remove-step').addEventListener('click', function() {
+                    this.closest('.step-entry').remove();
+                });
+            });
+        }
+        
+        // Add activity type button
+        var addActBtn = document.getElementById('add-activity-type');
+        if (addActBtn) {
+            addActBtn.addEventListener('click', function() {
+                var container = document.getElementById('activity-types-container');
+                var entryHtml = '<div class="mb-2 activity-type-entry">' +
+                    '<div class="input-group input-group-sm">' +
+                    '<input type="text" class="form-control" name="activity_type_name[]" placeholder="Activity name">' +
+                    '<input type="text" class="form-control" name="activity_type_icon[]" placeholder="Icon" style="max-width: 80px;">' +
+                    '<input type="color" class="form-control form-control-color" name="activity_type_color[]" value="#10b981" style="max-width: 50px;">' +
+                    '<button type="button" class="btn btn-outline-danger remove-activity-type"><i class="bi bi-trash"></i></button>' +
+                    '</div></div>';
+                container.insertAdjacentHTML('beforeend', entryHtml);
+            });
+        }
+        
+        // Remove step/activity type
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-step')) {
+                e.target.closest('.step-entry').remove();
+            }
+            if (e.target.classList.contains('remove-activity-type')) {
+                e.target.closest('.activity-type-entry').remove();
+            }
+        });
+    });
+</script>
+{% endblock %}

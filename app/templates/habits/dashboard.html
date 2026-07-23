@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Daily{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold">
+                <i class="bi bi-speedometer2 me-2"></i>My Dashboard
+            </h1>
+            <p class="text-muted">Track and manage your habits</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('habits.create_habit') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Create New Habit
+            </a>
+        </div>
+    </div>
+
+    {% if pinned_habits %}
+    <div class="pinned-section">
+        <div class="section-title"><i class="bi bi-pin-angle me-1"></i>Pinned Habits</div>
+        <div class="row">
+            {% for habit in pinned_habits %}
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card habit-card widget-card fade-in" style="border-left: 4px solid {{ habit.visual_settings.get('theme_color', '#10b981') }};">
+                    <div class="card-body" style="padding: 0.75rem 1rem;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold" style="color: {{ habit.visual_settings.get('theme_color', '#10b981') }};">
+                                <i class="bi bi-{{ habit.visual_settings.get('icon', 'house') }} me-1"></i>{{ habit.name }}
+                            </span>
+                            <button class="btn btn-sm btn-pin pinned" onclick="togglePin({{ habit.id }})" title="Unpin">
+                                <i class="bi bi-pin-angle-fill"></i>
+                            </button>
+                        </div>
+                        
+                        {% if habit.visual_model_type == 'percentage' %}
+                        {% set current = habit.visual_settings.get('current_value', 0) %}
+                        {% set max_val = habit.visual_settings.get('max_value', 100) %}
+                        {% set percentage = ((current / max_val * 100) if max_val > 0 else 0)|round %}
+                        <div class="progress mb-1" style="height: 8px;">
+                            <div class="progress-bar" style="width: {{ percentage }}%; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></div>
+                        </div>
+                        <small class="text-muted">{{ percentage }}% &mdash; {{ habit.visual_settings.get('unit', '') }}</small>
+                        
+                        {% elif habit.visual_model_type == 'progression' %}
+                        {% set steps = habit.visual_settings.get('steps', []) %}
+                        {% set current_step = habit.visual_settings.get('current_step', 0) %}
+                        {% set total = steps|length %}
+                        {% set pct = ((current_step / total * 100)|round if total > 0 else 0) %}
+                        <div class="progress mb-1" style="height: 8px;">
+                            <div class="progress-bar" style="width: {{ pct }}%; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></div>
+                        </div>
+                        <small class="text-muted">Step {{ current_step + 1 }}/{{ total }}</small>
+                        
+                        {% elif habit.visual_model_type == 'graph' %}
+                        <div style="height: 60px;"><canvas id="widget-graph-{{ habit.id }}"></canvas></div>
+                        
+                        {% elif habit.visual_model_type == 'calendar' %}
+                        <small class="text-muted">{% for day in habit.visual_settings.get('schedule', [])[:3] %}{{ day[:3] }}{{ ', ' if not loop.last }}{% endfor %}{% if habit.visual_settings.get('schedule', [])|length > 3 %}...{% endif %}</small>
+                        {% endif %}
+                        
+                        <div class="mt-2">
+                            <a href="{{ url_for('tracking.add_record', habit_id=habit.id) }}" class="btn btn-sm btn-outline-success" style="font-size: 0.75rem;">
+                                <i class="bi bi-plus me-1"></i>Record
+                            </a>
+                            <a href="{{ url_for('habits.view_habit', habit_id=habit.id) }}" class="btn btn-sm btn-outline-primary" style="font-size: 0.75rem;">
+                                <i class="bi bi-eye me-1"></i>View
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if unpinned_habits %}
+    <div class="row">
+        {% for habit in unpinned_habits %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card habit-card fade-in">
+                <div class="card-header d-flex justify-content-between align-items-center" style="border-top: 3px solid {{ habit.visual_settings.get('theme_color', '#10b981') }};">
+                    <span style="color: {{ habit.visual_settings.get('theme_color', '#10b981') }};">
+                        <i class="bi bi-{{ habit.visual_settings.get('icon', 'house') }} me-2"></i>
+                        {{ habit.name }}
+                    </span>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-secondary btn-pin" onclick="togglePin({{ habit.id }})" title="Pin to top">
+                            <i class="bi bi-pin"></i>
+                        </button>
+                        <span class="badge" style="background: {{ habit.visual_settings.get('theme_color', '#10b981') }};">{{ habit.visual_model_type|capitalize }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ habit.description or 'No description' }}</p>
+                    
+                    {% if habit.visual_model_type == 'graph' %}
+                    <div class="graph-container" style="height: 180px;">
+                        <canvas id="graph-{{ habit.id }}"></canvas>
+                    </div>
+                    
+                    {% elif habit.visual_model_type == 'progression' %}
+                    <div class="progress-steps">
+                        {% set steps = habit.visual_settings.get('steps', []) %}
+                        {% set current_step = habit.visual_settings.get('current_step', 0) %}
+                        {% set total = steps|length %}
+                        {% set pct = ((current_step / total * 100)|round if total > 0 else 0) %}
+                        <div class="d-flex justify-content-between mb-2">
+                            <small class="text-muted">Step {{ current_step + 1 }} of {{ total }}</small>
+                            <small class="text-muted fw-bold">{{ pct }}%</small>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar" style="width: {{ pct }}%; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></div>
+                        </div>
+                    </div>
+                    
+                    {% elif habit.visual_model_type == 'calendar' %}
+                    <div class="calendar-mini">
+                        <div class="text-center mb-2">
+                            <small class="text-muted fw-semibold">This Month</small>
+                        </div>
+                        <div class="calendar-grid" id="calendar-{{ habit.id }}"></div>
+                    </div>
+                    
+                    {% elif habit.visual_model_type == 'percentage' %}
+                    <div class="percentage-mini text-center">
+                        {% set current = habit.visual_settings.get('current_value', 0) %}
+                        {% set min_val = habit.visual_settings.get('min_value', 0) %}
+                        {% set max_val = habit.visual_settings.get('max_value', 100) %}
+                        {% set percentage = ((current - min_val) / (max_val - min_val) * 100) if max_val > min_val else 0 %}
+                        {% set percentage = [percentage, 0]|max %}
+                        {% set percentage = [percentage, 100]|min %}
+                        
+                        <div class="percentage-display">{{ percentage|round }}%</div>
+                        <div class="progress mt-3">
+                            <div class="progress-bar" style="width: {{ percentage }}%; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <small class="text-muted">{{ min_val }} {{ habit.visual_settings.get('unit', '') }}</small>
+                            <small class="text-muted">{{ max_val }} {{ habit.visual_settings.get('unit', '') }}</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('habits.view_habit', habit_id=habit.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i>View
+                        </a>
+                        <a href="{{ url_for('tracking.add_record', habit_id=habit.id) }}" class="btn btn-sm btn-success">
+                            <i class="bi bi-plus me-1"></i>Add Record
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not habits %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body empty-state">
+                    <i class="bi bi-inbox text-muted"></i>
+                    <h4>No habits yet</h4>
+                    <p>Start by creating your first habit!</p>
+                    <a href="{{ url_for('habits.create_habit') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>Create Your First Habit
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% for habit in unpinned_habits %}
+        {% if habit.visual_model_type == 'graph' %}
+            initGraph({{ habit.id }});
+        {% elif habit.visual_model_type == 'calendar' %}
+            initMiniCalendar({{ habit.id }});
+        {% endif %}
+    {% endfor %}
+    {% for habit in pinned_habits %}
+        {% if habit.visual_model_type == 'graph' %}
+            initWidgetGraph({{ habit.id }});
+        {% endif %}
+    {% endfor %}
+});
+
+function togglePin(habitId) {
+    fetch('/habits/' + habitId + '/pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(result) {
+        if (result.success) location.reload();
+    });
+}
+
+function initGraph(habitId) {
+    fetch('/tracking/api/' + habitId + '/data')
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            var ctx = document.getElementById('graph-' + habitId);
+            if (!ctx) return;
+            var labels = data.chart_data.labels.length > 0 ? data.chart_data.labels : ['No data'];
+            var values = data.chart_data.values.length > 0 ? data.chart_data.values : [0];
+            var color = data.habit.visual_settings && data.habit.visual_settings.theme_color ? data.habit.visual_settings.theme_color : '#10b981';
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.map(function(d) {
+                        var dt = new Date(d);
+                        return (dt.getMonth()+1) + '/' + dt.getDate();
+                    }),
+                    datasets: [{
+                        label: data.habit.name,
+                        data: values,
+                        borderColor: color,
+                        backgroundColor: color + '20',
+                        tension: 0.3,
+                        fill: true,
+                        pointRadius: values.length > 1 ? 3 : 5,
+                        pointBackgroundColor: color
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { beginAtZero: false, grid: { color: '#f1f5f9' } }
+                    }
+                }
+            });
+        })
+        .catch(function() {});
+}
+
+function initWidgetGraph(habitId) {
+    fetch('/tracking/api/' + habitId + '/data')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var ctx = document.getElementById('widget-graph-' + habitId);
+            if (!ctx) return;
+            var labels = data.chart_data.labels.length > 0 ? data.chart_data.labels : ['No data'];
+            var values = data.chart_data.values.length > 0 ? data.chart_data.values : [0];
+            var color = data.habit.visual_settings && data.habit.visual_settings.theme_color ? data.habit.visual_settings.theme_color : '#10b981';
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.map(function(d) { var dt = new Date(d); return (dt.getMonth()+1) + '/' + dt.getDate(); }),
+                    datasets: [{ data: values, borderColor: color, backgroundColor: color + '20', tension: 0.3, fill: true, pointRadius: 2 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { display: false }, y: { display: false } }
+                }
+            });
+        })
+        .catch(function() {});
+}
+
+function initMiniCalendar(habitId) {
+    var cal = document.getElementById('calendar-' + habitId);
+    if (!cal) return;
+    var now = new Date();
+    var year = now.getFullYear();
+    var month = now.getMonth();
+    var firstDay = new Date(year, month, 1).getDay();
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
+    var today = now.getDate();
+    
+    fetch('/tracking/api/' + habitId + '/data')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var recordDays = {};
+            data.records.forEach(function(rec) {
+                var d = new Date(rec.date);
+                if (d.getFullYear() === year && d.getMonth() === month) {
+                    recordDays[d.getDate()] = true;
+                }
+            });
+            renderMiniCalendar(cal, firstDay, daysInMonth, today, recordDays);
+        })
+        .catch(function() {
+            renderMiniCalendar(cal, firstDay, daysInMonth, today, {});
+        });
+}
+
+function renderMiniCalendar(cal, firstDay, daysInMonth, today, recordDays) {
+    cal.innerHTML = '';
+    for (var i = 0; i < firstDay; i++) {
+        var empty = document.createElement('div');
+        empty.className = 'calendar-day';
+        cal.appendChild(empty);
+    }
+    for (var d = 1; d <= daysInMonth; d++) {
+        var el = document.createElement('div');
+        el.className = 'calendar-day';
+        el.textContent = d;
+        if (d === today) el.classList.add('today');
+        if (recordDays[d]) el.classList.add('has-record');
+        cal.appendChild(el);
+    }
+}
+</script>
+{% endblock %}
