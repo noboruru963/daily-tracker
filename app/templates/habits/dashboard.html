@@ -18,9 +18,54 @@
         </div>
     </div>
 
+    {% set layout = current_user.settings.dashboard_layout if current_user.settings else 'grid' %}
+
     {% if pinned_habits %}
     <div class="pinned-section">
         <div class="section-title"><i class="bi bi-pin-angle me-1"></i>Pinned Habits</div>
+        {% if layout == 'list' %}
+        <div class="list-group">
+            {% for habit in pinned_habits %}
+            <div class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
+                <div class="d-flex align-items-center">
+                    <span class="fw-bold me-3" style="color: {{ habit.visual_settings.get('theme_color', '#10b981') }};">
+                        <i class="bi bi-{{ habit.visual_settings.get('icon', 'house') }} me-1"></i>{{ habit.name }}
+                    </span>
+                    <span class="badge" style="background: {{ habit.visual_settings.get('theme_color', '#10b981') }};">{{ habit.visual_model_type|capitalize }}</span>
+                    {% if habit.visual_model_type == 'percentage' %}
+                    {% set current = habit.visual_settings.get('current_value', 0) %}
+                    {% set max_val = habit.visual_settings.get('max_value', 100) %}
+                    {% set percentage = ((current / max_val * 100) if max_val > 0 else 0)|round %}
+                    <div class="progress ms-3" style="width: 120px; height: 8px;">
+                        <div class="progress-bar" style="width: {{ percentage }}%; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></div>
+                    </div>
+                    <small class="text-muted ms-2">{{ percentage }}% &mdash; {{ habit.visual_settings.get('unit', '') }}</small>
+                    {% elif habit.visual_model_type == 'progression' %}
+                    {% set steps = habit.visual_settings.get('steps', []) %}
+                    {% set current_step = habit.visual_settings.get('current_step', 0) %}
+                    {% set total = steps|length %}
+                    {% set pct = ((current_step / total * 100)|round if total > 0 else 0) %}
+                    <div class="progress ms-3" style="width: 120px; height: 8px;">
+                        <div class="progress-bar" style="width: {{ pct }}%; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></div>
+                    </div>
+                    <small class="text-muted ms-2">Step {{ current_step + 1 }}/{{ total }}</small>
+                    {% endif %}
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('tracking.add_record', habit_id=habit.id) }}" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-plus me-1"></i>Record
+                    </a>
+                    <a href="{{ url_for('habits.view_habit', habit_id=habit.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye me-1"></i>View
+                    </a>
+                    <button class="btn btn-sm btn-pin pinned" onclick="togglePin({{ habit.id }})" title="Unpin">
+                        <i class="bi bi-pin-angle-fill"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
         <div class="row">
             {% for habit in pinned_habits %}
             <div class="col-md-6 col-lg-4 mb-3">
@@ -74,10 +119,67 @@
             </div>
             {% endfor %}
         </div>
+        {% endif %}
     </div>
     {% endif %}
 
     {% if unpinned_habits %}
+    {% if layout == 'list' %}
+    <div class="list-group">
+        {% for habit in unpinned_habits %}
+        <div class="list-group-item d-flex justify-content-between align-items-center px-3 py-3">
+            <div class="d-flex align-items-center flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center w-100" style="max-width: 500px;">
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-sm btn-outline-secondary btn-pin me-3" onclick="togglePin({{ habit.id }})" title="Pin to top">
+                            <i class="bi bi-pin"></i>
+                        </button>
+                        <span class="fw-bold" style="color: {{ habit.visual_settings.get('theme_color', '#10b981') }};">
+                            <i class="bi bi-{{ habit.visual_settings.get('icon', 'house') }} me-2"></i>
+                            {{ habit.name }}
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <span class="badge" style="background: {{ habit.visual_settings.get('theme_color', '#10b981') }};">{{ habit.visual_model_type|capitalize }}</span>
+                        {% if habit.visual_model_type == 'percentage' %}
+                        {% set current = habit.visual_settings.get('current_value', 0) %}
+                        {% set min_val = habit.visual_settings.get('min_value', 0) %}
+                        {% set max_val = habit.visual_settings.get('max_value', 100) %}
+                        {% set percentage = ((current - min_val) / (max_val - min_val) * 100) if max_val > min_val else 0 %}
+                        {% set percentage = [percentage, 0]|max %}
+                        {% set percentage = [percentage, 100]|min %}
+                        <div class="progress" style="width: 150px; height: 10px;">
+                            <div class="progress-bar" style="width: {{ percentage }}%; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></div>
+                        </div>
+                        <small class="text-muted">{{ percentage|round }}%</small>
+                        {% elif habit.visual_model_type == 'progression' %}
+                        {% set steps = habit.visual_settings.get('steps', []) %}
+                        {% set current_step = habit.visual_settings.get('current_step', 0) %}
+                        {% set total = steps|length %}
+                        {% set pct = ((current_step / total * 100)|round if total > 0 else 0) %}
+                        <div class="progress" style="width: 150px; height: 10px;">
+                            <div class="progress-bar" style="width: {{ pct }}%; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></div>
+                        </div>
+                        <small class="text-muted">Step {{ current_step + 1 }}/{{ total }}</small>
+                        {% elif habit.visual_model_type == 'graph' %}
+                        <div style="width: 120px; height: 30px;"><canvas id="list-graph-{{ habit.id }}"></canvas></div>
+                        {% endif %}
+                    </div>
+                </div>
+                <p class="card-text text-muted mb-0 ms-5" style="flex: 1; max-width: 400px;">{{ habit.description or 'No description' }}</p>
+            </div>
+            <div class="d-flex gap-2 ms-3">
+                <a href="{{ url_for('habits.view_habit', habit_id=habit.id) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye me-1"></i>View
+                </a>
+                <a href="{{ url_for('tracking.add_record', habit_id=habit.id) }}" class="btn btn-sm btn-success">
+                    <i class="bi bi-plus me-1"></i>Add Record
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
     <div class="row">
         {% for habit in unpinned_habits %}
         <div class="col-md-6 col-lg-4 mb-4">
@@ -160,6 +262,7 @@
         {% endfor %}
     </div>
     {% endif %}
+    {% endif %}
 
     {% if not habits %}
     <div class="row">
@@ -194,6 +297,11 @@ document.addEventListener('DOMContentLoaded', function() {
     {% for habit in pinned_habits %}
         {% if habit.visual_model_type == 'graph' %}
             initWidgetGraph({{ habit.id }});
+        {% endif %}
+    {% endfor %}
+    {% for habit in unpinned_habits %}
+        {% if habit.visual_model_type == 'graph' %}
+            initListGraph({{ habit.id }});
         {% endif %}
     {% endfor %}
 });
@@ -264,6 +372,31 @@ function initWidgetGraph(habitId) {
                 data: {
                     labels: labels.map(function(d) { var dt = new Date(d); return (dt.getMonth()+1) + '/' + dt.getDate(); }),
                     datasets: [{ data: values, borderColor: color, backgroundColor: color + '20', tension: 0.3, fill: true, pointRadius: 2 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { display: false }, y: { display: false } }
+                }
+            });
+        })
+        .catch(function() {});
+}
+
+function initListGraph(habitId) {
+    fetch('/tracking/api/' + habitId + '/data')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var ctx = document.getElementById('list-graph-' + habitId);
+            if (!ctx) return;
+            var labels = data.chart_data.labels.length > 0 ? data.chart_data.labels : ['No data'];
+            var values = data.chart_data.values.length > 0 ? data.chart_data.values : [0];
+            var color = data.habit.visual_settings && data.habit.visual_settings.theme_color ? data.habit.visual_settings.theme_color : '#10b981';
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.map(function(d) { var dt = new Date(d); return (dt.getMonth()+1) + '/' + dt.getDate(); }),
+                    datasets: [{ data: values, borderColor: color, backgroundColor: color + '20', tension: 0.3, fill: true, pointRadius: 0 }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,

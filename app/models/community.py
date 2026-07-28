@@ -10,6 +10,7 @@ class CommunityPost(db.Model):
     content = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    user = db.relationship('User', backref='community_posts', lazy=True)
     likes = db.relationship('Like', backref='post', lazy=True, cascade='all, delete-orphan')
     comments = db.relationship('Comment', backref='post', lazy=True, cascade='all, delete-orphan')
     reports = db.relationship('Report', backref='post', lazy=True, cascade='all, delete-orphan')
@@ -36,6 +37,8 @@ class Like(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('community_posts.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    user = db.relationship('User', backref='likes', lazy=True)
+    
     def __repr__(self):
         return f'<Like {self.id}>'
 
@@ -48,6 +51,8 @@ class Comment(db.Model):
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    user = db.relationship('User', backref='comments', lazy=True)
+    
     def __repr__(self):
         return f'<Comment {self.id}>'
 
@@ -59,6 +64,8 @@ class Report(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('community_posts.id'), nullable=False)
     reason = db.Column(db.String(200), default='')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref='reports', lazy=True)
     
     def __repr__(self):
         return f'<Report {self.id}>'

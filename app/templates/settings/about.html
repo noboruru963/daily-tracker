@@ -16,7 +16,14 @@
                     
                     <div class="text-start">
                         <h5 class="fw-bold mb-3"><i class="bi bi-info-circle me-2"></i>Version</h5>
-                        <p class="ms-3">Version <strong>2.0</strong></p>
+                        <div class="ms-3 mb-4">
+                            <label for="version-selector" class="form-label">Select Version</label>
+                            <select class="form-select" id="version-selector" style="max-width: 200px;">
+                                <option value="2.1" selected>v2.1 - Latest</option>
+                                <option value="2.0">v2.0 - Major Update</option>
+                                <option value="1.2">v1.2 - Previous Update</option>
+                            </select>
+                        </div>
                         
                         <h5 class="fw-bold mb-3 mt-4"><i class="bi bi-people me-2"></i>Developed By</h5>
                         <ul class="list-unstyled ms-3">
@@ -28,7 +35,21 @@
                         
                         <h5 class="fw-bold mb-3 mt-4"><i class="bi bi-journal-text me-2"></i>Update Log</h5>
                         <div class="ms-3">
-                            <div class="mb-3 p-3 bg-light rounded">
+                            <div id="changelog-v2.1" class="mb-3 p-3 bg-light rounded">
+                                <strong>v2.1</strong> <span class="text-muted">- Bug Fixes & Improvements</span>
+                                <ul class="mt-2 mb-0">
+                                    <li>Removed empty icon option from habit creation/edit</li>
+                                    <li>Fixed percentage visual mode record updates (pie chart and percentage value now update immediately)</li>
+                                    <li>Fixed undefined error on public habit views and comments (user attribute properly loaded)</li>
+                                    <li>Enabled full editing of "percentage" habits and all visual models (customizations, color, symbol, min/max, unit now editable)</li>
+                                    <li>Added ability to add, reorder, or remove steps when editing "progression" habits</li>
+                                    <li>Display chosen symbol when creating a new record (next to input field)</li>
+                                    <li>Graph habit editing: chart type change now reflects immediately in preview</li>
+                                    <li>Primary color setting now applies only to green-themed elements (banner, buttons, progress bars, accents)</li>
+                                    <li>Dashboard layout customization now applies changes (grid/list layout selection)</li>
+                                </ul>
+                            </div>
+                            <div id="changelog-v2.0" class="mb-3 p-3 bg-light rounded" style="display: none;">
                                 <strong>v2.0</strong> <span class="text-muted">- Major Update</span>
                                 <ul class="mt-2 mb-0">
                                     <li>Numeric data type selection (positive/negative integer/float) with validation</li>
@@ -45,7 +66,7 @@
                                     <li>Record value input: typing only (scroll-to-change removed)</li>
                                 </ul>
                             </div>
-                            <div class="mb-3 p-3 bg-light rounded">
+                            <div id="changelog-v1.2" class="mb-3 p-3 bg-light rounded" style="display: none;">
                                 <strong>v1.2</strong> <span class="text-muted">- Previous Update</span>
                                 <ul class="mt-2 mb-0">
                                     <li>Functional dark mode theme switching in Settings</li>
@@ -72,4 +93,21 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var selector = document.getElementById('version-selector');
+    if (selector) {
+        selector.addEventListener('change', function() {
+            var version = this.value;
+            document.getElementById('changelog-v2.1').style.display = 'none';
+            document.getElementById('changelog-v2.0').style.display = 'none';
+            document.getElementById('changelog-v1.2').style.display = 'none';
+            document.getElementById('changelog-v' + version).style.display = 'block';
+        });
+    }
+});
+</script>
 {% endblock %}

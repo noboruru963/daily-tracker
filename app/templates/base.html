@@ -10,7 +10,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="{% if current_user.is_authenticated %}{{ current_user.settings.theme if current_user.settings else 'light' }}{% endif %}-mode"
-      style="{% if current_user.is_authenticated and current_user.settings and current_user.settings.primary_color %}--primary: {{ current_user.settings.primary_color }}; --primary-light: {{ current_user.settings.primary_color }}cc; --primary-dark: {{ current_user.settings.primary_color }}dd;{% endif %}">
+      style="{% if current_user.is_authenticated and current_user.settings and current_user.settings.primary_color %}--primary: {{ current_user.settings.primary_color }}; --primary-light: {{ current_user.settings.primary_color }}cc; --primary-dark: {{ current_user.settings.primary_color }}dd;{% endif %} --accent: #10b981; --accent-light: #34d399; --accent-dark: #059669;">
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('habits.dashboard') }}">

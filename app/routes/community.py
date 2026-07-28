@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.models.habit import Habit
 from app.models.community import CommunityPost, Like, Comment, Report
+from sqlalchemy.orm import joinedload
 
 community_bp = Blueprint('community', __name__)
 
@@ -20,7 +21,11 @@ def view_habit(habit_id):
         flash('This habit is private.', 'error')
         return redirect(url_for('community.index'))
     
-    posts = CommunityPost.query.filter_by(habit_id=habit_id).order_by(CommunityPost.created_at.desc()).all()
+    posts = CommunityPost.query.options(
+        joinedload(CommunityPost.user),
+        joinedload(CommunityPost.comments).joinedload(Comment.user),
+        joinedload(CommunityPost.likes)
+    ).filter_by(habit_id=habit_id).order_by(CommunityPost.created_at.desc()).all()
     return render_template('community/habit.html', habit=habit, posts=posts)
 
 @community_bp.route('/habit/<int:habit_id>/share', methods=['POST'])

@@ -95,7 +95,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <label class="form-label">Graph Type</label>
-                                    <select class="form-select" name="graph_type">
+                                    <select class="form-select" name="graph_type" id="graph_type_select">
                                         <option value="line" {{ 'selected' if habit.visual_settings.get('graph_type', 'line') == 'line' }}>Line Chart</option>
                                         <option value="bar" {{ 'selected' if habit.visual_settings.get('graph_type', 'line') == 'bar' }}>Bar Chart</option>
                                         <option value="area" {{ 'selected' if habit.visual_settings.get('graph_type', 'line') == 'area' }}>Area Chart</option>
@@ -111,6 +111,10 @@
                                     </select>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <div class="graph-container mt-3" style="height: 250px;">
+                            <canvas id="editGraphPreview"></canvas>
                         </div>
                         
                         {% elif habit.visual_model_type == 'progression' %}
@@ -305,6 +309,38 @@
                 e.target.closest('.activity-type-entry').remove();
             }
         });
+        
+        // Graph type preview
+        var graphTypeSelect = document.getElementById('graph_type_select');
+        if (graphTypeSelect) {
+            var chartInstance = null;
+            function initEditGraph() {
+                var habitId = {{ habit.id }};
+                fetch('/tracking/api/' + habitId + '/data')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        var ctx = document.getElementById('editGraphPreview');
+                        if (!ctx) return;
+                        var labels = data.chart_data.labels.length > 0 ? data.chart_data.labels : ['No data'];
+                        var values = data.chart_data.values.length > 0 ? data.chart_data.values : [0];
+                        var color = data.habit.visual_settings && data.habit.visual_settings.theme_color ? data.habit.visual_settings.theme_color : '#10b981';
+                        var type = graphTypeSelect.value;
+                        if (chartInstance) {
+                            chartInstance.destroy();
+                        }
+                        chartInstance = new Chart(ctx, {
+                            type: type,
+                            data: {
+                                labels: labels.map(function(d) { var dt = new Date(d); return (dt.getMonth()+1) + '/' + dt.getDate(); }),
+                                datasets: [{ label: '{{ habit.name }}', data: values, borderColor: color, backgroundColor: color + '33', tension: 0.3, fill: true }]
+                            },
+                            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } }
+                        });
+                    });
+            }
+            initEditGraph();
+            graphTypeSelect.addEventListener('change', initEditGraph);
+        }
     });
 </script>
 {% endblock %}

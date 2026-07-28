@@ -4,6 +4,8 @@ from app import db
 from app.models.habit import Habit
 from app.models.record import Record
 from app.config import Config
+from sqlalchemy.orm.attributes import flag_modified
+from sqlalchemy.orm.attributes import flag_modified
 
 habits_bp = Blueprint('habits', __name__)
 
@@ -129,6 +131,8 @@ def edit_habit(habit_id):
                     acolor = act_colors[i] if i < len(act_colors) else '#10b981'
                     activity_types.append({'name': aname, 'icon': aicon, 'color': acolor})
             habit.visual_settings['activity_types'] = activity_types
+        
+        flag_modified(habit, 'visual_settings')
         
         db.session.commit()
         flash('Habit updated successfully!', 'success')

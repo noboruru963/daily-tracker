@@ -4,6 +4,7 @@ from datetime import datetime, date
 from app import db
 from app.models.habit import Habit
 from app.models.record import Record
+from sqlalchemy.orm.attributes import flag_modified
 
 tracking_bp = Blueprint('tracking', __name__)
 
@@ -72,6 +73,7 @@ def add_record(habit_id):
                     steps[record.step_number]['description'] = ''
                 habit.visual_settings['steps'] = steps
             habit.visual_settings['current_step'] = record.step_number + 1
+            flag_modified(habit, 'visual_settings')
         elif habit.visual_model_type == 'calendar':
             record.time_spent = float(request.form.get('time_spent', 0))
             act_type = request.form.get('activity_type', '')
@@ -79,6 +81,7 @@ def add_record(habit_id):
         elif habit.visual_model_type == 'percentage':
             record.target_value = numerical_value
             habit.visual_settings['current_value'] = numerical_value
+            flag_modified(habit, 'visual_settings')
         
         db.session.add(record)
         db.session.commit()
@@ -124,11 +127,20 @@ def quick_add_record(habit_id):
     if habit.visual_model_type == 'progression':
         record.step_number = int(data.get('step_number', 0))
         record.step_name = data.get('step_name', '')
+        steps = habit.visual_settings.get('steps', [])
+        if record.step_number < len(steps):
+            steps[record.step_number]['completed'] = True
+            if 'description' not in steps[record.step_number]:
+                steps[record.step_number]['description'] = ''
+            habit.visual_settings['steps'] = steps
+        habit.visual_settings['current_step'] = record.step_number + 1
+        flag_modified(habit, 'visual_settings')
     elif habit.visual_model_type == 'calendar':
         record.time_spent = float(data.get('time_spent', 0))
     elif habit.visual_model_type == 'percentage':
         record.target_value = numerical_value
         habit.visual_settings['current_value'] = numerical_value
+        flag_modified(habit, 'visual_settings')
     
     db.session.add(record)
     db.session.commit()
@@ -193,6 +205,7 @@ def update_record(habit_id, record_id):
     
     if habit.visual_model_type == 'percentage':
         habit.visual_settings['current_value'] = record.numerical_value
+        flag_modified(habit, 'visual_settings')
     
     db.session.commit()
     return jsonify({'success': True, 'message': 'Record updated'})
