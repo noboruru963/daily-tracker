@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from app import db
 from app.models.habit import Habit
 from app.models.record import Record
@@ -56,6 +56,20 @@ def add_record(habit_id):
         else:
             parsed_date = datetime.utcnow()
         
+        # Check daily limit for calendar habits
+        if habit.visual_model_type == 'calendar':
+            times_per_day = habit.visual_settings.get('times_per_day', 1)
+            day_start = parsed_date.replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = day_start + timedelta(days=1)
+            daily_count = Record.query.filter(
+                Record.habit_id == habit_id,
+                Record.date >= day_start,
+                Record.date < day_end
+            ).count()
+            if daily_count >= times_per_day:
+                flash(f'Daily limit reached. You can only log this habit {times_per_day} time(s) per day.', 'error')
+                return redirect(url_for('tracking.add_record', habit_id=habit_id))
+        
         record = Record(
             habit_id=habit_id,
             numerical_value=numerical_value,
@@ -89,7 +103,7 @@ def add_record(habit_id):
         flash('Record added successfully!', 'success')
         return redirect(url_for('habits.view_habit', habit_id=habit_id))
     
-    today_str = date.today().isoformat()
+    today_str = request.args.get('date', date.today().isoformat())
     return render_template('tracking/add.html', habit=habit, today=today_str, numeric_types=NUMERIC_TYPES)
 
 @tracking_bp.route('/api/<int:habit_id>/quick-add', methods=['POST'])
@@ -112,6 +126,19 @@ def quick_add_record(habit_id):
     else:
         parsed_date = datetime.utcnow()
     
+    # Check daily limit for calendar habits
+    if habit.visual_model_type == 'calendar':
+        times_per_day = habit.visual_settings.get('times_per_day', 1)
+        day_start = parsed_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
+        daily_count = Record.query.filter(
+            Record.habit_id == habit_id,
+            Record.date >= day_start,
+            Record.date < day_end
+        ).count()
+        if daily_count >= times_per_day:
+            return jsonify({'error': f'Daily limit reached. You can only log this habit {times_per_day} time(s) per day.'}), 400
+
     numerical_value = float(data.get('numerical_value', 1))
     description = data.get('description', '')
     activity_type = data.get('activity_type', '')
@@ -157,6 +184,42 @@ def view_records(habit_id):
     
     records = Record.query.filter_by(habit_id=habit_id).order_by(Record.date.desc()).all()
     return render_template('tracking/records.html', habit=habit, records=records)
+
+@tracking_bp.route('/api/daily-count/<int:habit_id>')
+@login_required
+def get_daily_count(habit_id):
+    habit = Habit.query.get_or_404(habit_id)
+    if habit.user_id != current_user.id:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    date_str = request.args.get('date', '')
+    try:
+        query_date = datetime.strptime(date_str, '%Y-%m-%d') if date_str else datetime.utcnow()
+    except ValueError:
+        query_date = datetime.utcnow()
+    
+    day_start = query_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    day_end = day_start + timedelta(days=1)
+    count = Record.query.filter(
+        Record.habit_id == habit_id,
+        Record.date >= day_start,
+        Record.date < day_end
+    ).count()
+    
+    return jsonify({'count': count})
+
+@tracking_bp.route('/api/calendar-habits')
+@login_required
+def get_calendar_habits_data():
+    habits = Habit.query.filter_by(user_id=current_user.id, visual_model_type='calendar').all()
+    result = []
+    for habit in habits:
+        records = Record.query.filter_by(habit_id=habit.id).order_by(Record.date.asc()).all()
+        result.append({
+            'habit': habit.to_dict(),
+            'records': [record.to_dict() for record in records]
+        })
+    return jsonify(result)
 
 @tracking_bp.route('/api/<int:habit_id>/data')
 @login_required

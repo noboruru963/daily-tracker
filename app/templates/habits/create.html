@@ -186,6 +186,10 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <label class="form-label">Schedule</label>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="everyday" onclick="toggleEveryDay(this)">
+                                        <label class="form-check-label fw-bold" for="everyday" style="color: var(--primary);">Everyday</label>
+                                    </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" name="schedule[]" value="monday" id="monday">
                                         <label class="form-check-label" for="monday">Monday</label>
@@ -218,6 +222,11 @@
                                 <div class="col-md-6">
                                     <label class="form-label">Reminder Time</label>
                                     <input type="time" class="form-control" name="reminder_time" value="09:00">
+                                    <div class="mt-3">
+                                        <label class="form-label">Times per Day</label>
+                                        <input type="number" class="form-control" name="times_per_day" value="1" min="1" max="99">
+                                        <div class="form-text">How many times can you log this habit per day?</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -335,6 +344,14 @@
                 e.target.closest('.input-group').remove();
             }
         });
+        
+        // Every day toggle
+        window.toggleEveryDay = function(el) {
+            var checked = el.checked;
+            document.querySelectorAll('#calendar-settings input[name="schedule[]"]').forEach(function(cb) {
+                cb.checked = checked;
+            });
+        };
     });
 </script>
 {% endblock %}

@@ -56,6 +56,7 @@ def create_habit():
             visual_settings['schedule'] = request.form.getlist('schedule[]')
             visual_settings['reminder_time'] = request.form.get('reminder_time', '09:00')
             visual_settings['activity_types'] = []
+            visual_settings['times_per_day'] = int(request.form.get('times_per_day', 1))
         
         habit = Habit(
             user_id=current_user.id,
@@ -121,6 +122,7 @@ def edit_habit(habit_id):
         elif habit.visual_model_type == 'calendar':
             habit.visual_settings['schedule'] = request.form.getlist('schedule[]')
             habit.visual_settings['reminder_time'] = request.form.get('reminder_time', '09:00')
+            habit.visual_settings['times_per_day'] = int(request.form.get('times_per_day', 1))
             act_names = request.form.getlist('activity_type_name[]')
             act_icons = request.form.getlist('activity_type_icon[]')
             act_colors = request.form.getlist('activity_type_color[]')

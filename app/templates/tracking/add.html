@@ -112,6 +112,12 @@
                         {% elif habit.visual_model_type == 'calendar' %}
                         <hr>
                         <h6><i class="bi bi-calendar me-2"></i>Calendar Details</h6>
+                        {% set times_per_day = habit.visual_settings.get('times_per_day', 1) %}
+                        <div class="alert alert-info py-2 mb-3" id="dailyLimitInfo">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Daily limit: <strong>{{ times_per_day }}</strong> log(s) per day.
+                            <span id="remainingCount">Loading...</span>
+                        </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -261,6 +267,37 @@ document.addEventListener('DOMContentLoaded', function() {
     
     typeSelect.addEventListener('change', updateValidation);
     updateValidation();
+    
+    {% if habit.visual_model_type == 'calendar' %}
+    // Load remaining count for calendar habit
+    function loadRemainingCount() {
+        var dateInput = document.getElementById('date');
+        var dateStr = dateInput ? dateInput.value : '{{ today }}';
+        var remainEl = document.getElementById('remainingCount');
+        if (!remainEl) return;
+        
+        var timesPerDay = {{ habit.visual_settings.get('times_per_day', 1) }};
+        
+        fetch('/tracking/api/daily-count/{{ habit.id }}?date=' + dateStr)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var remaining = timesPerDay - data.count;
+                if (remaining <= 0) {
+                    remainEl.innerHTML = '<span class="text-danger fw-bold">Limit reached! (' + remaining + ' remaining)</span>';
+                    document.querySelector('button[type="submit"]').disabled = true;
+                } else {
+                    remainEl.innerHTML = '<span class="text-success fw-bold">' + remaining + ' remaining today</span>';
+                    document.querySelector('button[type="submit"]').disabled = false;
+                }
+            })
+            .catch(function() {
+                remainEl.textContent = '';
+            });
+    }
+    
+    document.getElementById('date').addEventListener('change', loadRemainingCount);
+    loadRemainingCount();
+    {% endif %}
 });
 </script>
 {% endblock %}
