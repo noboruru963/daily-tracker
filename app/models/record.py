@@ -21,6 +21,9 @@ class Record(db.Model):
     # Percentage model fields
     target_value = db.Column(db.Float)
     
+    # Manual ordering (used when the user drags records into a custom order)
+    sort_order = db.Column(db.Integer, default=0)
+    
     def __repr__(self):
         return f'<Record {self.id} for Habit {self.habit_id}>'
     

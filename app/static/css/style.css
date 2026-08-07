@@ -82,9 +82,10 @@ body.dark-mode .input-group .btn-outline-secondary {
 }
 body.dark-mode .bg-light { background-color: #374151 !important; }
 body.dark-mode .bg-white { background-color: var(--bg-card) !important; }
-body.dark-mode .table { color: var(--text-primary); }
-body.dark-mode .table thead th { color: var(--text-muted); border-color: var(--border-color); }
-body.dark-mode .table td { border-color: var(--border-color); }
+body.dark-mode .table { background-color: var(--bg-card); color: var(--text-primary); }
+body.dark-mode .table thead th { color: var(--text-muted); border-color: var(--border-color); background-color: var(--bg-card); }
+body.dark-mode .table td, body.dark-mode .table th { color: var(--text-primary); border-color: var(--border-color); background-color: var(--bg-card); }
+body.dark-mode .table tbody tr:hover { background-color: var(--table-hover); color: var(--text-primary); }
 body.dark-mode .list-group-item { background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-primary); }
 body.dark-mode .list-group-item-success { background-color: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.3); color: #a7f3d0; }
 body.dark-mode .list-group-item-primary { background-color: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.3); color: #93c5fd; }
@@ -153,8 +154,8 @@ body {
 
 /* Navbar Styles */
 .navbar {
-    background: var(--bg-navbar) !important;
-    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     padding: 0.6rem 0;
 }
 
@@ -314,15 +315,42 @@ body {
 .calendar-day:not(.has-record):not(.today):hover { background: #e2e8f0; }
 body.dark-mode .calendar-day:not(.has-record):not(.today):hover { background: #374151; }
 
+/* Habit nodes (home page calendar) */
+.day-habit-nodes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    flex-grow: 1;
+    width: 100%;
+    padding: 4px 0;
+}
+
+.habit-node {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    background: transparent;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.habit-node.filled {
+    background: var(--primary);
+}
+
 /* Step Progression */
-.step-progress { display: flex; justify-content: space-between; position: relative; margin: 2rem 0; padding: 0 1rem; }
+.step-progress { display: flex; justify-content: space-between; position: relative; margin: 2rem 0; padding: 0; }
 
 .step-progress::before {
     content: '';
     position: absolute;
     top: 50%;
-    left: 1rem;
-    right: 1rem;
+    left: 22px;
+    right: 22px;
     height: 4px;
     background-color: #e2e8f0;
     z-index: 1;
@@ -332,9 +360,10 @@ body.dark-mode .calendar-day:not(.has-record):not(.today):hover { background: #3
 .step-progress .progress-bar {
     position: absolute;
     top: 50%;
-    left: 1rem;
+    left: 22px;
     height: 4px;
-    background: linear-gradient(90deg, var(--success), var(--success-light));
+    width: calc((100% - 44px) * var(--line-frac, 0));
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
     z-index: 2;
     transform: translateY(-50%);
     border-radius: 2px;
@@ -394,24 +423,24 @@ body.dark-mode .calendar-day:not(.has-record):not(.today):hover { background: #3
 .btn-primary {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     border: none;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, #047857 100%);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    background: var(--primary-dark);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     transform: translateY(-1px);
 }
 
 .btn-success {
-    background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     border: none;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .btn-success:hover {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    background: var(--primary-dark);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     transform: translateY(-1px);
 }
 
@@ -539,7 +568,8 @@ body.dark-mode .btn-like.liked { border-color: var(--primary); background: var(-
     .visual-model-icon { font-size: 2rem; }
     .percentage-display { font-size: 2.5rem; }
     .step-progress { flex-direction: column; align-items: center; }
-    .step-progress::before { width: 4px; height: 100%; left: 50%; top: 0; transform: translateX(-50%); }
+    .step-progress::before { width: 4px; height: calc(100% - 44px); left: 50%; top: 22px; transform: translateX(-50%); }
+    .step-progress .progress-bar { width: 4px; height: calc((100% - 44px) * var(--line-frac, 0)); left: 50%; top: 22px; transform: translateX(-50%); }
     .clock-display { display: none; }
     .calendar-day { min-height: 60px; }
 }

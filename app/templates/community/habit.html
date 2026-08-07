@@ -36,8 +36,11 @@
                     <div class="progression-view">
                         {% set steps = habit.visual_settings.get('steps', []) %}
                         {% set current_step = habit.visual_settings.get('current_step', 0) %}
+                        {% set total_steps = steps|length %}
+                        {% set line_frac = (current_step / (total_steps - 1)) if total_steps > 1 else 0 %}
+                        {% set line_frac = [line_frac, 1]|min %}
                         <div class="step-progress">
-                            <div class="progress-bar" style="width: {{ (current_step / steps|length * 100) if steps|length > 0 else 0 }}%; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></div>
+                            <div class="progress-bar" style="--line-frac: {{ line_frac }}; background: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></div>
                             {% for step in steps %}
                             <div class="step-item {{ 'completed' if loop.index0 < current_step else ('current' if loop.index0 == current_step else '') }}" style="{% if loop.index0 <= current_step %}background: {{ habit.visual_settings.get('theme_color', '#10b981') }};{% endif %}">{{ loop.index }}</div>
                             {% endfor %}
@@ -137,8 +140,18 @@
                                 </div>
                                 <div class="flex-grow-1 ms-2">
                                     <div class="bg-light rounded p-2">
-                                        <strong style="font-size: 0.85rem;">{{ comment.user.username }}</strong>
-                                        <small class="text-muted ms-2">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <strong style="font-size: 0.85rem;">{{ comment.user.username }}</strong>
+                                                <small class="text-muted ms-2">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                            </div>
+                                            <form method="POST" action="{{ url_for('community.report_comment', comment_id=comment.id) }}" class="d-inline">
+                                                <input type="hidden" name="reason" value="Reported by user">
+                                                <button type="submit" class="btn btn-sm btn-link text-danger p-0 border-0" title="Report this comment" onclick="return confirm('Report this comment? It will be removed if it receives 10 reports.')">
+                                                    <i class="bi bi-flag"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                         <p class="mb-0 mt-1">{{ comment.content }}</p>
                                     </div>
                                 </div>
@@ -226,11 +239,13 @@ function initHabitGraph() {
             var labels = data.chart_data.labels.length > 0 ? data.chart_data.labels : ['No data'];
             var values = data.chart_data.values.length > 0 ? data.chart_data.values : [0];
             var color = data.habit.visual_settings && data.habit.visual_settings.theme_color ? data.habit.visual_settings.theme_color : '#10b981';
+            var graphType = '{{ habit.visual_settings.get("graph_type", "line") }}';
+            if (graphType === 'area') graphType = 'line';
             new Chart(ctx, {
-                type: 'line',
+                type: graphType,
                 data: {
                     labels: labels.map(function(d) { var dt = new Date(d); return (dt.getMonth()+1) + '/' + dt.getDate(); }),
-                    datasets: [{ label: '{{ habit.name }}', data: values, borderColor: color, backgroundColor: color + '33', tension: 0.3, fill: true }]
+                    datasets: [{ label: '{{ habit.name }}', data: values, borderColor: color, backgroundColor: color + '33', tension: 0.3, fill: graphType === 'line' }]
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } }
             });

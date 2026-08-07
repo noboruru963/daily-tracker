@@ -245,7 +245,7 @@ function saveRecord() {
     .then(function(r) { return r.json(); })
     .then(function(result) {
         if (result.success) {
-            location.reload();
+            window.location.href = '/habits/' + habitId;
         } else {
             alert('Failed to update record: ' + (result.error || 'Unknown error'));
         }

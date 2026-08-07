@@ -2,15 +2,17 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from app import db
 from app.models.habit import Habit
-from app.models.community import CommunityPost, Like, Comment, Report
+from app.models.community import CommunityPost, Like, Comment, Report, CommentReport
 from sqlalchemy.orm import joinedload
 
 community_bp = Blueprint('community', __name__)
 
+COMMENT_REPORT_LIMIT = 10
+
 @community_bp.route('/')
 @login_required
 def index():
-    public_habits = Habit.query.filter_by(is_public=True).filter(Habit.user_id != current_user.id).all()
+    public_habits = Habit.query.filter_by(is_public=True).all()
     return render_template('community/index.html', habits=public_habits)
 
 @community_bp.route('/habit/<int:habit_id>')
@@ -105,6 +107,32 @@ def add_comment(post_id):
     db.session.commit()
     
     return redirect(url_for('community.view_habit', habit_id=post.habit_id))
+
+@community_bp.route('/comment/<int:comment_id>/report', methods=['POST'])
+@login_required
+def report_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    
+    existing_report = CommentReport.query.filter_by(user_id=current_user.id, comment_id=comment_id).first()
+    if existing_report:
+        flash('You have already reported this comment.', 'info')
+        return redirect(url_for('community.view_habit', habit_id=comment.post.habit_id))
+    
+    reason = request.form.get('reason', '')
+    report = CommentReport(user_id=current_user.id, comment_id=comment_id, reason=reason)
+    db.session.add(report)
+    db.session.commit()
+    
+    report_count = CommentReport.query.filter_by(comment_id=comment_id).count()
+    habit_id = comment.post.habit_id
+    if report_count >= COMMENT_REPORT_LIMIT:
+        db.session.delete(comment)
+        db.session.commit()
+        flash('This comment has been removed after receiving multiple reports.', 'success')
+    else:
+        flash('Comment has been reported. Thank you for your feedback.', 'success')
+    
+    return redirect(url_for('community.view_habit', habit_id=habit_id))
 
 @community_bp.route('/habit/<int:habit_id>/copy', methods=['POST'])
 @login_required

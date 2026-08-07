@@ -492,24 +492,21 @@ function renderCombinedCalendar() {
         .then(function(r) { return r.json(); })
         .then(function(data) {
             calendarHabitIds = data.map(function(item) { return item.habit.id; });
-            var recordDays = {};
+            var habitInfo = data.map(function(item) {
+                return {
+                    id: item.habit.id,
+                    name: item.habit.name,
+                    color: item.habit.visual_settings && item.habit.visual_settings.theme_color ? item.habit.visual_settings.theme_color : '#10b981'
+                };
+            });
+            var recordSet = {};
             data.forEach(function(item) {
-                var habitColor = item.habit.visual_settings ? item.habit.visual_settings.theme_color : '#10b981';
-                var habitIcon = item.habit.visual_settings ? item.habit.visual_settings.icon : 'house';
-                var habitName = item.habit.name;
                 item.records.forEach(function(rec) {
                     var d = new Date(rec.date);
                     if (d.getFullYear() === year && d.getMonth() === month) {
                         var day = d.getDate();
-                        if (!recordDays[day]) recordDays[day] = [];
-                        recordDays[day].push({
-                            habit: habitName,
-                            color: habitColor,
-                            icon: habitIcon,
-                            value: rec.numerical_value,
-                            desc: rec.description || '',
-                            activity: rec.activity_type || ''
-                        });
+                        if (!recordSet[day]) recordSet[day] = {};
+                        recordSet[day][item.habit.id] = true;
                     }
                 });
             });
@@ -527,30 +524,18 @@ function renderCombinedCalendar() {
                     dayElement.classList.add('today');
                 }
                 
-                var activities = recordDays[day] || [];
-                if (activities.length > 0) {
-                    dayElement.classList.add('has-record');
-                    
-                    var activitiesDiv = document.createElement('div');
-                    activitiesDiv.className = 'day-activities';
-                    var maxShow = 4;
-                    var showCount = Math.min(activities.length, maxShow);
-                    for (var a = 0; a < showCount; a++) {
-                        var actEl = document.createElement('div');
-                        actEl.className = 'day-activity';
-                        actEl.style.background = activities[a].color;
-                        actEl.textContent = activities[a].habit;
-                        actEl.title = activities[a].habit + ': ' + (activities[a].desc || 'Value: ' + activities[a].value);
-                        activitiesDiv.appendChild(actEl);
-                    }
-                    if (activities.length > maxShow) {
-                        var moreEl = document.createElement('div');
-                        moreEl.className = 'day-more';
-                        moreEl.textContent = '(+ ' + (activities.length - maxShow) + ')';
-                        activitiesDiv.appendChild(moreEl);
-                    }
-                    dayElement.appendChild(activitiesDiv);
-                }
+                var nodesDiv = document.createElement('div');
+                nodesDiv.className = 'day-habit-nodes';
+                habitInfo.forEach(function(h) {
+                    var completed = !!(recordSet[day] && recordSet[day][h.id]);
+                    var node = document.createElement('span');
+                    node.className = 'habit-node' + (completed ? ' filled' : '');
+                    node.style.borderColor = h.color;
+                    if (completed) node.style.background = h.color;
+                    node.title = h.name + (completed ? ' - completed' : ' - not completed');
+                    nodesDiv.appendChild(node);
+                });
+                dayElement.appendChild(nodesDiv);
                 
                 dayElement.addEventListener('click', function() {
                     var d = this.dataset.day;

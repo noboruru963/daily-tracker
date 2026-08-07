@@ -11,10 +11,22 @@ tracking_bp = Blueprint('tracking', __name__)
 NUMERIC_TYPES = {
     'positive_int': {'min': 0, 'step': 1, 'allow_negative': False, 'allow_decimal': False},
     'negative_int': {'max': 0, 'step': 1, 'allow_negative': True, 'allow_decimal': False},
-    'positive_float': {'min': 0, 'step': 0.01, 'allow_negative': False, 'allow_decimal': True},
-    'negative_float': {'max': 0, 'step': 0.01, 'allow_negative': True, 'allow_decimal': True},
-    'float': {'step': 0.01, 'allow_negative': True, 'allow_decimal': True}
+    'positive_float': {'min': 0, 'step': 'any', 'allow_negative': False, 'allow_decimal': True},
+    'negative_float': {'max': 0, 'step': 'any', 'allow_negative': True, 'allow_decimal': True},
+    'float': {'step': 'any', 'allow_negative': True, 'allow_decimal': True}
 }
+
+def _clamp_percentage_value(habit, value):
+    """Keep a percentage habit's progress within [min_value, max_value]."""
+    if habit.visual_model_type != 'percentage':
+        return value
+    min_val = habit.visual_settings.get('min_value', 0)
+    max_val = habit.visual_settings.get('max_value', 100)
+    if value < min_val:
+        return min_val
+    if value > max_val:
+        return max_val
+    return value
 
 @tracking_bp.route('/<int:habit_id>/add', methods=['GET', 'POST'])
 @login_required
@@ -93,8 +105,10 @@ def add_record(habit_id):
             act_type = request.form.get('activity_type', '')
             record.activity_type = act_type if act_type else ''
         elif habit.visual_model_type == 'percentage':
-            record.target_value = numerical_value
-            habit.visual_settings['current_value'] = numerical_value
+            clamped = _clamp_percentage_value(habit, numerical_value)
+            record.numerical_value = clamped
+            record.target_value = clamped
+            habit.visual_settings['current_value'] = clamped
             flag_modified(habit, 'visual_settings')
         
         db.session.add(record)
@@ -165,8 +179,10 @@ def quick_add_record(habit_id):
     elif habit.visual_model_type == 'calendar':
         record.time_spent = float(data.get('time_spent', 0))
     elif habit.visual_model_type == 'percentage':
-        record.target_value = numerical_value
-        habit.visual_settings['current_value'] = numerical_value
+        clamped = _clamp_percentage_value(habit, numerical_value)
+        record.numerical_value = clamped
+        record.target_value = clamped
+        habit.visual_settings['current_value'] = clamped
         flag_modified(habit, 'visual_settings')
     
     db.session.add(record)
@@ -182,7 +198,7 @@ def view_records(habit_id):
         flash('Access denied.', 'error')
         return redirect(url_for('habits.dashboard'))
     
-    records = Record.query.filter_by(habit_id=habit_id).order_by(Record.date.desc()).all()
+    records = Record.query.filter_by(habit_id=habit_id).order_by(Record.sort_order.desc(), Record.date.desc()).all()
     return render_template('tracking/records.html', habit=habit, records=records)
 
 @tracking_bp.route('/api/daily-count/<int:habit_id>')
@@ -228,7 +244,7 @@ def get_habit_data(habit_id):
     if habit.user_id != current_user.id:
         return jsonify({'error': 'Access denied'}), 403
     
-    records = Record.query.filter_by(habit_id=habit_id).order_by(Record.date.asc()).all()
+    records = Record.query.filter_by(habit_id=habit_id).order_by(Record.sort_order.desc(), Record.date.desc()).all()
     
     data = {
         'habit': habit.to_dict(),
@@ -267,7 +283,10 @@ def update_record(habit_id, record_id):
             pass
     
     if habit.visual_model_type == 'percentage':
-        habit.visual_settings['current_value'] = record.numerical_value
+        clamped = _clamp_percentage_value(habit, record.numerical_value)
+        record.numerical_value = clamped
+        record.target_value = clamped
+        habit.visual_settings['current_value'] = clamped
         flag_modified(habit, 'visual_settings')
     
     db.session.commit()
@@ -299,10 +318,31 @@ def reorder_records(habit_id):
     if not data or 'record_ids' not in data:
         return jsonify({'error': 'No data provided'}), 400
     
-    for idx, record_id in enumerate(data['record_ids']):
+    record_ids = data['record_ids']
+    total = len(record_ids)
+    for idx, record_id in enumerate(record_ids):
         record = Record.query.get(record_id)
         if record and record.habit_id == habit_id:
-            record.date = record.date.replace(minute=idx)
+            # Top row of the table gets the highest sort_order so that the
+            # graph and table both display records in the manually chosen order.
+            record.sort_order = total - idx
     
     db.session.commit()
     return jsonify({'success': True, 'message': 'Records reordered'})
+
+@tracking_bp.route('/api/<int:habit_id>/reset-progress', methods=['POST'])
+@login_required
+def reset_progress(habit_id):
+    habit = Habit.query.get_or_404(habit_id)
+    if habit.user_id != current_user.id:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    if habit.visual_model_type != 'percentage':
+        return jsonify({'error': 'Reset is only available for percentage habits'}), 400
+    
+    min_val = habit.visual_settings.get('min_value', 0)
+    habit.visual_settings['current_value'] = min_val
+    flag_modified(habit, 'visual_settings')
+    
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Progress reset'})

@@ -5,7 +5,6 @@ from app.models.habit import Habit
 from app.models.record import Record
 from app.config import Config
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.orm.attributes import flag_modified
 
 habits_bp = Blueprint('habits', __name__)
 
@@ -15,7 +14,8 @@ def dashboard():
     habits = Habit.query.filter_by(user_id=current_user.id).all()
     pinned = [h for h in habits if h.is_pinned]
     unpinned = [h for h in habits if not h.is_pinned]
-    return render_template('habits/dashboard.html', habits=habits, pinned_habits=pinned, unpinned_habits=unpinned, visual_models=Config.VISUAL_MODELS)
+    calendar_habits = [h for h in habits if h.visual_model_type == 'calendar']
+    return render_template('habits/dashboard.html', habits=habits, pinned_habits=pinned, unpinned_habits=unpinned, calendar_habits=calendar_habits, visual_models=Config.VISUAL_MODELS)
 
 @habits_bp.route('/create', methods=['GET', 'POST'])
 @login_required
@@ -83,7 +83,7 @@ def view_habit(habit_id):
         flash('Access denied.', 'error')
         return redirect(url_for('habits.dashboard'))
     
-    records = Record.query.filter_by(habit_id=habit_id).order_by(Record.date.desc()).all()
+    records = Record.query.filter_by(habit_id=habit_id).order_by(Record.sort_order.desc(), Record.date.desc()).all()
     return render_template('habits/view.html', habit=habit, records=records)
 
 @habits_bp.route('/<int:habit_id>/edit', methods=['GET', 'POST'])

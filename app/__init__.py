@@ -36,5 +36,17 @@ def create_app(config_name=None):
     
     with app.app_context():
         db.create_all()
+        
+        # Lightweight migration: add sort_order column to records table for existing DBs
+        try:
+            from sqlalchemy import inspect, text
+            inspector = inspect(db.engine)
+            if 'records' in inspector.get_table_names():
+                record_cols = [col['name'] for col in inspector.get_columns('records')]
+                if 'sort_order' not in record_cols:
+                    db.session.execute(text('ALTER TABLE records ADD COLUMN sort_order INTEGER DEFAULT 0'))
+                    db.session.commit()
+        except Exception:
+            app.logger.warning('Could not run sort_order migration.', exc_info=True)
     
     return app

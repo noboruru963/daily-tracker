@@ -344,6 +344,7 @@
                         var values = data.chart_data.values.length > 0 ? data.chart_data.values : [0];
                         var color = data.habit.visual_settings && data.habit.visual_settings.theme_color ? data.habit.visual_settings.theme_color : '#10b981';
                         var type = graphTypeSelect.value;
+                        if (type === 'area') type = 'line';
                         if (chartInstance) {
                             chartInstance.destroy();
                         }
@@ -351,7 +352,7 @@
                             type: type,
                             data: {
                                 labels: labels.map(function(d) { var dt = new Date(d); return (dt.getMonth()+1) + '/' + dt.getDate(); }),
-                                datasets: [{ label: '{{ habit.name }}', data: values, borderColor: color, backgroundColor: color + '33', tension: 0.3, fill: true }]
+                                datasets: [{ label: '{{ habit.name }}', data: values, borderColor: color, backgroundColor: color + '33', tension: 0.3, fill: type === 'line' }]
                             },
                             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } }
                         });

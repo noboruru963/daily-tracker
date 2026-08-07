@@ -108,19 +108,19 @@
                                         <p class="card-text text-muted">{{ model_info.description }}</p>
                                         
                                         {% if model_key == 'graph' %}
-                                        <small class="text-success">
+                                        <small class="best-for-text" style="color: var(--primary);">
                                             <i class="bi bi-check-circle me-1"></i>Best for: Weight lifting, gardening, quitting bad habits
                                         </small>
                                         {% elif model_key == 'progression' %}
-                                        <small class="text-success">
+                                        <small class="best-for-text" style="color: var(--primary);">
                                             <i class="bi bi-check-circle me-1"></i>Best for: Projects, building something, baking
                                         </small>
                                         {% elif model_key == 'calendar' %}
-                                        <small class="text-success">
+                                        <small class="best-for-text" style="color: var(--primary);">
                                             <i class="bi bi-check-circle me-1"></i>Best for: Sports sessions, courses, events
                                         </small>
                                         {% elif model_key == 'percentage' %}
-                                        <small class="text-success">
+                                        <small class="best-for-text" style="color: var(--primary);">
                                             <i class="bi bi-check-circle me-1"></i>Best for: Big targets, overall progression
                                         </small>
                                         {% endif %}
@@ -301,7 +301,11 @@
             option.addEventListener('click', function() {
                 colorOptions.forEach(o => o.classList.remove('selected'));
                 this.classList.add('selected');
-                document.getElementById('theme_color').value = this.dataset.color;
+                const color = this.dataset.color;
+                document.getElementById('theme_color').value = color;
+                document.querySelectorAll('.best-for-text').forEach(function(el) {
+                    el.style.color = color;
+                });
             });
         });
         

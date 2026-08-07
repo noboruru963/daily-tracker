@@ -52,6 +52,7 @@ class Comment(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     user = db.relationship('User', backref='comments', lazy=True)
+    reports = db.relationship('CommentReport', backref='comment', lazy=True, cascade='all, delete-orphan')
     
     def __repr__(self):
         return f'<Comment {self.id}>'
@@ -69,3 +70,17 @@ class Report(db.Model):
     
     def __repr__(self):
         return f'<Report {self.id}>'
+
+class CommentReport(db.Model):
+    __tablename__ = 'comment_reports'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    comment_id = db.Column(db.Integer, db.ForeignKey('comments.id'), nullable=False)
+    reason = db.Column(db.String(200), default='')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref='comment_reports', lazy=True)
+    
+    def __repr__(self):
+        return f'<CommentReport {self.id}>'
