@@ -27,12 +27,14 @@ def create_app(config_name=None):
     from app.routes.tracking import tracking_bp
     from app.routes.community import community_bp
     from app.routes.settings import settings_bp
+    from app.routes.calories import calories_bp
     
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(habits_bp, url_prefix='/habits')
     app.register_blueprint(tracking_bp, url_prefix='/tracking')
     app.register_blueprint(community_bp, url_prefix='/community')
     app.register_blueprint(settings_bp, url_prefix='/settings')
+    app.register_blueprint(calories_bp, url_prefix='/calories')
     
     with app.app_context():
         db.create_all()

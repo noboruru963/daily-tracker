@@ -142,6 +142,21 @@ body.dark-mode .empty-state p { color: var(--text-muted); }
 body.dark-mode .color-option { border: 3px solid var(--border-color); }
 body.dark-mode .color-option.selected { border-color: var(--text-primary); }
 
+/* Calorie Tracker Dark Mode */
+body.dark-mode .food-tag { background: var(--input-bg); color: var(--text-primary); border-color: var(--border-color); }
+body.dark-mode .food-tag:hover { border-color: var(--primary); color: var(--text-primary); }
+body.dark-mode .food-tag.active { background: var(--primary); color: white; border-color: var(--primary); }
+body.dark-mode .food-tag .badge { background: rgba(255,255,255,0.15) !important; color: var(--text-primary) !important; }
+body.dark-mode .food-tag.active .badge { background: rgba(255,255,255,0.25) !important; color: white !important; }
+body.dark-mode .calorie-ring-wrapper circle:first-child { stroke: #4b5563; }
+body.dark-mode #mealPreview .card { background: var(--input-bg) !important; border-color: var(--primary) !important; }
+body.dark-mode #mealItems div { color: var(--text-secondary); }
+body.dark-mode .form-label { color: var(--text-secondary); }
+body.dark-mode .table th { color: var(--text-muted); }
+body.dark-mode .table td { color: var(--text-primary); }
+body.dark-mode .form-control::placeholder { color: var(--text-muted); }
+body.dark-mode .form-select { color: var(--text-primary); }
+
 /* Global Styles */
 body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
