@@ -65,7 +65,7 @@
                         <div class="mb-3">
                             <label class="form-label">Icon</label>
                             <div class="d-flex flex-wrap gap-2">
-                                {% for icon_name, icon_bi in [('house', 'house'), ('book', 'book'), ('dumbbell', 'dumbbell'), ('heart', 'heart'), ('star', 'star'), ('egg-fried', 'egg-fried'), ('bicycle', 'bicycle'), ('controller', 'controller'), ('pen', 'pen'), ('laptop', 'laptop'), ('moon-stars', 'moon-stars'), ('droplet', 'droplet'), ('music-note', 'music-note'), ('brush', 'brush')] %}
+                                {% for icon_name, icon_bi in [('house', 'house'), ('book', 'book'), ('camera', 'camera'), ('heart', 'heart'), ('star', 'star'), ('egg', 'egg'), ('bicycle', 'bicycle'), ('controller', 'controller'), ('pen', 'pen'), ('laptop', 'laptop'), ('moon', 'moon'), ('droplet', 'droplet'), ('music-note', 'music-note'), ('brush', 'brush')] %}
                                 <div class="icon-option btn btn-outline-secondary {{ 'active' if habit.visual_settings.get('icon', 'house') == icon_name }}" data-icon="{{ icon_name }}">
                                     <i class="bi bi-{{ icon_bi }}"></i>
                                 </div>

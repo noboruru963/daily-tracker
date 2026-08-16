@@ -98,7 +98,7 @@ body.dark-mode .dropdown-item:hover { background-color: rgba(16, 185, 129, 0.1);
 body.dark-mode .dropdown-divider { border-color: var(--border-color); }
 body.dark-mode .form-check-label { color: var(--text-primary); }
 body.dark-mode .form-text { color: var(--text-muted); }
-body.dark-mode .breadcrumb-item a { color: var(--accent-light); }
+body.dark-mode .breadcrumb-item a { color: var(--text-primary); }
 body.dark-mode .settings-section { background: var(--bg-card); border-color: var(--border-color); }
 body.dark-mode .post-card { background: var(--bg-card); border-color: var(--border-color); }
 body.dark-mode .stat-card { background: var(--bg-card); border-color: var(--border-color); }
@@ -128,7 +128,7 @@ body.dark-mode .text-muted { color: var(--text-muted) !important; }
 body.dark-mode .text-dark { color: var(--text-primary) !important; }
 body.dark-mode .text-secondary { color: var(--text-secondary) !important; }
 body.dark-mode strong { color: var(--text-primary); }
-body.dark-mode a { color: var(--accent-light); }
+body.dark-mode a { color: var(--text-primary); }
 body.dark-mode .btn-close { filter: invert(1); }
 body.dark-mode .form-check-input { background-color: var(--input-bg); border-color: var(--border-color); }
 body.dark-mode .form-check-input:checked { background-color: var(--primary); border-color: var(--primary); }
