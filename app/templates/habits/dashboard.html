@@ -157,68 +157,73 @@
     </div>
     {% endif %}
 
-    <!-- Activity Heatmap -->
+    <!-- Activity Heatmap / Calendar Toggle -->
     {% if habits %}
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-grid-3x3 me-2"></i>Activity Heatmap</span>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline-primary view-toggle active" data-view="heatmap">
+                    <i class="bi bi-grid-3x3 me-1"></i>Heatmap
+                </button>
+                <button class="btn btn-sm btn-outline-primary view-toggle" data-view="calendar">
+                    <i class="bi bi-calendar me-1"></i>Calendar
+                </button>
+            </div>
             <small class="text-muted" id="heatmap-summary">Loading...</small>
         </div>
         <div class="card-body">
-            <div class="heatmap-container" id="heatmapContainer"></div>
-            <div class="d-flex justify-content-between align-items-center mt-2">
-                <small class="text-muted">Less</small>
-                <div class="heatmap-legend">
-                    <div class="heatmap-cell level-0" title="No activity"></div>
-                    <div class="heatmap-cell level-1" title="1-2 records"></div>
-                    <div class="heatmap-cell level-2" title="3-5 records"></div>
-                    <div class="heatmap-cell level-3" title="6-9 records"></div>
-                    <div class="heatmap-cell level-4" title="10+ records"></div>
+            <!-- Heatmap View -->
+            <div id="heatmap-view">
+                <div class="heatmap-container" id="heatmapContainer"></div>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-muted">Less</small>
+                    <div class="heatmap-legend">
+                        <div class="heatmap-cell level-0" title="No activity"></div>
+                        <div class="heatmap-cell level-1" title="1-2 records"></div>
+                        <div class="heatmap-cell level-2" title="3-5 records"></div>
+                        <div class="heatmap-cell level-3" title="6-9 records"></div>
+                        <div class="heatmap-cell level-4" title="10+ records"></div>
+                    </div>
+                    <small class="text-muted">More</small>
                 </div>
-                <small class="text-muted">More</small>
             </div>
-        </div>
-    </div>
-    {% endif %}
 
-    {% set calendar_habits = habits|selectattr('visual_model_type', 'equalto', 'calendar')|list %}
-    {% if calendar_habits %}
-    <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-calendar me-2"></i>Calendar Habits Overview</span>
-            <small class="text-muted">{{ calendar_habits|length }} habit(s)</small>
-        </div>
-        <div class="card-body">
-            <div class="row mb-3">
-                {% for habit in calendar_habits %}
-                <div class="col-auto mb-2">
-                    <span class="badge d-inline-flex align-items-center gap-1" style="background: var(--primary);">
-                        <i class="bi bi-{{ habit.visual_settings.get('icon', 'house') }}"></i>
-                        {{ habit.name }}
-                        <span class="badge bg-light text-dark ms-1" style="font-size: 0.65rem;">{{ habit.visual_settings.get('times_per_day', 1) }}x/day</span>
-                    </span>
+            <!-- Calendar View -->
+            <div id="calendar-view" style="display: none;">
+                {% set calendar_habits = habits|selectattr('visual_model_type', 'equalto', 'calendar')|list %}
+                {% if calendar_habits %}
+                <div class="row mb-3">
+                    {% for habit in calendar_habits %}
+                    <div class="col-auto mb-2">
+                        <span class="badge d-inline-flex align-items-center gap-1" style="background: var(--primary);">
+                            <i class="bi bi-{{ habit.visual_settings.get('icon', 'house') }}"></i>
+                            {{ habit.name }}
+                            <span class="badge bg-light text-dark ms-1" style="font-size: 0.65rem;">{{ habit.visual_settings.get('times_per_day', 1) }}x/day</span>
+                        </span>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6"><h6 class="mb-0">Current Month</h6></div>
-                <div class="col-md-6 text-end">
-                    <button class="btn btn-outline-secondary btn-sm" id="combinedPrevMonth"><i class="bi bi-chevron-left"></i></button>
-                    <span class="mx-3 fw-semibold" id="combinedCurrentMonth"></span>
-                    <button class="btn btn-outline-secondary btn-sm" id="combinedNextMonth"><i class="bi bi-chevron-right"></i></button>
+                {% endif %}
+                <div class="row mb-3">
+                    <div class="col-md-6"><h6 class="mb-0">Current Month</h6></div>
+                    <div class="col-md-6 text-end">
+                        <button class="btn btn-outline-secondary btn-sm" id="combinedPrevMonth"><i class="bi bi-chevron-left"></i></button>
+                        <span class="mx-3 fw-semibold" id="combinedCurrentMonth"></span>
+                        <button class="btn btn-outline-secondary btn-sm" id="combinedNextMonth"><i class="bi bi-chevron-right"></i></button>
+                    </div>
                 </div>
-            </div>
-            <div class="calendar-grid" id="combinedCalendarView">
-                <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Sun</div>
-                <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Mon</div>
-                <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Tue</div>
-                <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Wed</div>
-                <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Thu</div>
-                <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Fri</div>
-                <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Sat</div>
-            </div>
-            <div class="mt-2">
-                <small class="text-muted">Click on a day to add a record for all calendar habits</small>
+                <div class="calendar-grid" id="combinedCalendarView">
+                    <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Sun</div>
+                    <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Mon</div>
+                    <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Tue</div>
+                    <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Wed</div>
+                    <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Thu</div>
+                    <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Fri</div>
+                    <div class="calendar-day fw-bold" style="min-height: auto; padding: 6px;">Sat</div>
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">Click on a day to add a record for all calendar habits</small>
+                </div>
             </div>
         </div>
     </div>
@@ -416,6 +421,22 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // View toggle (Heatmap / Calendar)
+    var toggleBtns = document.querySelectorAll('.view-toggle');
+    toggleBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            toggleBtns.forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            var view = this.dataset.view;
+            document.getElementById('heatmap-view').style.display = view === 'heatmap' ? '' : 'none';
+            document.getElementById('calendar-view').style.display = view === 'calendar' ? '' : 'none';
+            var summary = document.getElementById('heatmap-summary');
+            if (view === 'calendar') {
+                summary.textContent = '';
+            }
+        });
+    });
+
     {% for habit in unpinned_habits %}
         {% if habit.visual_model_type == 'graph' %}
             initGraph({{ habit.id }});
