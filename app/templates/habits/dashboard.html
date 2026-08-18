@@ -193,19 +193,20 @@
                 {% set calendar_habits = habits|selectattr('visual_model_type', 'equalto', 'calendar')|list %}
                 {% if calendar_habits %}
                 <div class="row mb-3">
-                    {% for habit in calendar_habits %}
-                    <div class="col-auto mb-2">
-                        <span class="badge d-inline-flex align-items-center gap-1" style="background: var(--primary);">
-                            <i class="bi bi-{{ habit.visual_settings.get('icon', 'house') }}"></i>
-                            {{ habit.name }}
-                            <span class="badge bg-light text-dark ms-1" style="font-size: 0.65rem;">{{ habit.visual_settings.get('times_per_day', 1) }}x/day</span>
-                        </span>
+                    <div class="col">
+                        <h6 class="mb-2" style="color: var(--primary);">Schedule:</h6>
+                        <div class="d-flex flex-wrap gap-1">
+                            {% for habit in calendar_habits %}
+                            {% for day in habit.visual_settings.get('schedule', []) %}
+                            <span class="badge" style="background: {{ habit.visual_settings.get('theme_color', 'var(--primary)') }};">{{ day|capitalize }}</span>
+                            {% endfor %}
+                            {% endfor %}
+                        </div>
                     </div>
-                    {% endfor %}
                 </div>
                 {% endif %}
                 <div class="row mb-3">
-                    <div class="col-md-6"><h6 class="mb-0">Current Month</h6></div>
+                    <div class="col-md-6"><h5 class="mb-0">Current Month</h5></div>
                     <div class="col-md-6 text-end">
                         <button class="btn btn-outline-secondary btn-sm" id="combinedPrevMonth"><i class="bi bi-chevron-left"></i></button>
                         <span class="mx-3 fw-semibold" id="combinedCurrentMonth"></span>
@@ -721,8 +722,8 @@ function renderCombinedCalendar() {
                     var d = new Date(rec.date);
                     if (d.getFullYear() === year && d.getMonth() === month) {
                         var day = d.getDate();
-                        if (!recordSet[day]) recordSet[day] = {};
-                        recordSet[day][item.habit.id] = true;
+                        if (!recordSet[day]) recordSet[day] = [];
+                        recordSet[day].push({ id: item.habit.id, name: item.habit.name, color: item.habit.visual_settings.theme_color || '#10b981' });
                     }
                 });
             });
@@ -740,18 +741,35 @@ function renderCombinedCalendar() {
                     dayElement.classList.add('today');
                 }
                 
-                var nodesDiv = document.createElement('div');
-                nodesDiv.className = 'day-habit-nodes';
-                habitInfo.forEach(function(h) {
-                    var completed = !!(recordSet[day] && recordSet[day][h.id]);
-                    var node = document.createElement('span');
-                    node.className = 'habit-node' + (completed ? ' filled' : '');
-                    node.style.borderColor = h.color;
-                    if (completed) node.style.background = h.color;
-                    node.title = h.name + (completed ? ' - completed' : ' - not completed');
-                    nodesDiv.appendChild(node);
-                });
-                dayElement.appendChild(nodesDiv);
+                var activities = recordSet[day] || [];
+                if (activities.length > 0) {
+                    dayElement.classList.add('has-record');
+                    var actDiv = document.createElement('div');
+                    actDiv.className = 'day-activities';
+                    var shown = activities.slice(0, 3);
+                    shown.forEach(function(act) {
+                        var actEl = document.createElement('div');
+                        actEl.className = 'day-activity';
+                        actEl.style.background = act.color;
+                        actEl.textContent = act.name;
+                        actDiv.appendChild(actEl);
+                    });
+                    if (activities.length > 3) {
+                        var moreEl = document.createElement('div');
+                        moreEl.className = 'day-more';
+                        moreEl.textContent = '+' + (activities.length - 3) + ' more';
+                        actDiv.appendChild(moreEl);
+                    }
+                    dayElement.appendChild(actDiv);
+                } else {
+                    habitInfo.forEach(function(h) {
+                        var node = document.createElement('span');
+                        node.className = 'habit-node';
+                        node.style.borderColor = h.color;
+                        node.title = h.name + ' - not completed';
+                        dayElement.appendChild(node);
+                    });
+                }
                 
                 dayElement.addEventListener('click', function() {
                     var d = this.dataset.day;
