@@ -324,7 +324,7 @@ document.addEventListener('DOMContentLoaded', function() {
     arc.setAttribute('stroke-dashoffset', circumference * (1 - pct));
 
     if (pct < 0.8) {
-        arc.setAttribute('stroke', '#10b981');
+        arc.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#10b981');
     } else if (pct <= 1.0) {
         arc.setAttribute('stroke', '#f59e0b');
     } else {
@@ -352,7 +352,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         label: 'Calories',
                         data: totals,
                         backgroundColor: totals.map(function(v) {
-                            if (v <= data.maintenance * 0.8) return '#10b981';
+                            var primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#10b981';
+                            if (v <= data.maintenance * 0.8) return primaryColor;
                             if (v <= data.maintenance) return '#f59e0b';
                             return '#ef4444';
                         }),

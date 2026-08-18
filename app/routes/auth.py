@@ -6,6 +6,13 @@ from app.models.settings import UserSettings
 
 auth_bp = Blueprint('auth', __name__)
 
+ALLOWED_EMAIL_DOMAINS = {
+    'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'live.com',
+    'aol.com', 'icloud.com', 'mail.com', 'protonmail.com', 'proton.me',
+    'zoho.com', 'yandex.com', 'gmx.com', 'fastmail.com', 'tutanota.com',
+    'inbox.com', 'icloud.com', 'msn.com', 'windowslive.com',
+}
+
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -21,6 +28,11 @@ def register():
         
         if not username or not email or not password:
             flash('All fields are required.', 'error')
+            return render_template('auth/register.html', form_data=form_data)
+        
+        email_domain = email.split('@')[-1].lower() if '@' in email else ''
+        if email_domain not in ALLOWED_EMAIL_DOMAINS:
+            flash('Please use a valid email address (e.g. Gmail, Yahoo, Outlook, etc.).', 'error')
             return render_template('auth/register.html', form_data=form_data)
         
         if password != confirm_password:

@@ -48,7 +48,89 @@ def create_app(config_name=None):
                 if 'sort_order' not in record_cols:
                     db.session.execute(text('ALTER TABLE records ADD COLUMN sort_order INTEGER DEFAULT 0'))
                     db.session.commit()
+                if 'record_icon' not in record_cols:
+                    db.session.execute(text("ALTER TABLE records ADD COLUMN record_icon VARCHAR(50) DEFAULT ''"))
+                    db.session.commit()
         except Exception:
-            app.logger.warning('Could not run sort_order migration.', exc_info=True)
-    
+            app.logger.warning('Could not run records migration.', exc_info=True)
+        
+        # Seed placeholder public community habits
+        try:
+            from app.models.habit import Habit
+            from app.models.user import User
+            system_user = User.query.filter_by(username='dailyteam').first()
+            if not system_user:
+                system_user = User(
+                    username='dailyteam',
+                    email='team@dailyapp.com',
+                )
+                system_user.set_password('system-only-not-for-login')
+                db.session.add(system_user)
+                db.session.commit()
+
+                community_habits = [
+                    {
+                        'name': 'Read 30 Minutes Daily',
+                        'description': 'Spend at least 30 minutes reading a book every day. Build your knowledge and vocabulary.',
+                        'icon': 'book',
+                        'theme_color': '#0ea5e9',
+                        'visual_model_type': 'graph',
+                        'settings': {'graph_type': 'line', 'time_range': 30}
+                    },
+                    {
+                        'name': 'Drink 8 Glasses of Water',
+                        'description': 'Stay hydrated throughout the day by drinking at least 8 glasses of water.',
+                        'icon': 'droplet',
+                        'theme_color': '#06b6d4',
+                        'visual_model_type': 'percentage',
+                        'settings': {'min_value': 0, 'max_value': 8, 'current_value': 0, 'unit': 'glasses'}
+                    },
+                    {
+                        'name': 'Morning Meditation',
+                        'description': 'Practice 10 minutes of mindfulness meditation every morning.',
+                        'icon': 'moon',
+                        'theme_color': '#8b5cf6',
+                        'visual_model_type': 'graph',
+                        'settings': {'graph_type': 'line', 'time_range': 30}
+                    },
+                    {
+                        'name': 'Workout 3x per Week',
+                        'description': 'Hit the gym or exercise at least 3 times per week.',
+                        'icon': 'bicycle',
+                        'theme_color': '#ef4444',
+                        'visual_model_type': 'calendar',
+                        'settings': {'schedule': ['monday', 'wednesday', 'friday'], 'reminder_time': '17:00', 'times_per_day': 1}
+                    },
+                    {
+                        'name': 'Learn a New Skill',
+                        'description': 'Dedicate 20 minutes each day to learning something new.',
+                        'icon': 'laptop',
+                        'theme_color': '#a855f7',
+                        'visual_model_type': 'graph',
+                        'settings': {'graph_type': 'line', 'time_range': 30}
+                    },
+                    {
+                        'name': 'Practice Guitar',
+                        'description': 'Practice playing guitar for 30 minutes daily.',
+                        'icon': 'music-note',
+                        'theme_color': '#ec4899',
+                        'visual_model_type': 'graph',
+                        'settings': {'graph_type': 'line', 'time_range': 30}
+                    },
+                ]
+
+                for h in community_habits:
+                    habit = Habit(
+                        user_id=system_user.id,
+                        name=h['name'],
+                        description=h['description'],
+                        visual_model_type=h['visual_model_type'],
+                        visual_settings={'theme_color': h['theme_color'], 'icon': h['icon'], **h['settings']},
+                        is_public=True
+                    )
+                    db.session.add(habit)
+                db.session.commit()
+        except Exception:
+            app.logger.warning('Could not seed community habits.', exc_info=True)
+        
     return app

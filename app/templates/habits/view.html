@@ -205,7 +205,12 @@
                                 {% for record in records[:5] %}
                                 <tr draggable="true" data-record-id="{{ record.id }}" class="record-row">
                                     <td><i class="bi bi-grip-vertical drag-handle"></i></td>
-                                    <td>{{ record.date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        {% if record.record_icon %}
+                                        <i class="bi bi-{{ record.record_icon }} me-1" style="color: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></i>
+                                        {% endif %}
+                                        {{ record.date.strftime('%Y-%m-%d %H:%M') }}
+                                    </td>
                                     <td><strong>{{ record.numerical_value }}</strong></td>
                                     <td>{{ record.description or '-' }}</td>
                                     {% if habit.visual_model_type == 'progression' %}

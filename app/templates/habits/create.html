@@ -9,261 +9,339 @@
             <h1 class="display-6">
                 <i class="bi bi-plus-circle me-2"></i>Create New Habit
             </h1>
-            <p class="text-muted">Choose a visual model and customize your habit tracking</p>
+            <p class="text-muted">Choose a template or create your own custom habit</p>
+        </div>
+    </div>
+
+    <!-- Template / Custom Toggle -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-primary create-mode active" data-mode="custom">
+                    <i class="bi bi-pencil me-1"></i>Create Custom
+                </button>
+                <button type="button" class="btn btn-outline-primary create-mode" data-mode="templates">
+                    <i class="bi bi-grid me-1"></i>Use Template
+                </button>
+            </div>
         </div>
     </div>
 
     <form method="POST" action="{{ url_for('habits.create_habit') }}">
-        <div class="row">
-            <!-- Left Column: Basic Info -->
-            <div class="col-lg-4">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="bi bi-info-circle me-2"></i>Basic Information
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Habit Name *</label>
-                            <input type="text" class="form-control" id="name" name="name" required placeholder="e.g., Morning Exercise">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="What is this habit about?"></textarea>
-                        </div>
-                        
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="is_public" name="is_public">
-                            <label class="form-check-label" for="is_public">Make this habit public</label>
-                            <div class="form-text">Share your progress with the community</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Customization Panel -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="bi bi-palette me-2"></i>Customization
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label">Theme Color</label>
-                            <div class="d-flex gap-2 flex-wrap">
-                                <div class="color-option" style="background-color: #10b981;" data-color="#10b981"></div>
-                                <div class="color-option" style="background-color: #0ea5e9;" data-color="#0ea5e9"></div>
-                                <div class="color-option" style="background-color: #6366f1;" data-color="#6366f1"></div>
-                                <div class="color-option" style="background-color: #f59e0b;" data-color="#f59e0b"></div>
-                                <div class="color-option" style="background-color: #ef4444;" data-color="#ef4444"></div>
-                                <div class="color-option" style="background-color: #8b5cf6;" data-color="#8b5cf6"></div>
-                                <div class="color-option" style="background-color: #ec4899;" data-color="#ec4899"></div>
-                                <div class="color-option" style="background-color: #14b8a6;" data-color="#14b8a6"></div>
-                                <div class="color-option" style="background-color: #f97316;" data-color="#f97316"></div>
-                                <div class="color-option" style="background-color: #84cc16;" data-color="#84cc16"></div>
-                            </div>
-                            <input type="hidden" id="theme_color" name="theme_color" value="#10b981">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Icon</label>
-                            <div class="d-flex flex-wrap gap-2">
-                                <div class="icon-option btn btn-outline-secondary active" data-icon="house"><i class="bi bi-house"></i></div>
-                                <div class="icon-option btn btn-outline-secondary" data-icon="book"><i class="bi bi-book"></i></div>
-                                <div class="icon-option btn btn-outline-secondary" data-icon="camera"><i class="bi bi-camera"></i></div>
-                                <div class="icon-option btn btn-outline-secondary" data-icon="heart"><i class="bi bi-heart"></i></div>
-                                <div class="icon-option btn btn-outline-secondary" data-icon="star"><i class="bi bi-star"></i></div>
-                                <div class="icon-option btn btn-outline-secondary" data-icon="egg"><i class="bi bi-egg"></i></div>
-                                <div class="icon-option btn btn-outline-secondary" data-icon="bicycle"><i class="bi bi-bicycle"></i></div>
-                                <div class="icon-option btn btn-outline-secondary" data-icon="controller"><i class="bi bi-controller"></i></div>
-                                <div class="icon-option btn btn-outline-secondary" data-icon="pen"><i class="bi bi-pen"></i></div>
-                                <div class="icon-option btn btn-outline-secondary" data-icon="laptop"><i class="bi bi-laptop"></i></div>
-                                <div class="icon-option btn btn-outline-secondary" data-icon="moon"><i class="bi bi-moon"></i></div>
-                                <div class="icon-option btn btn-outline-secondary" data-icon="droplet"><i class="bi bi-droplet"></i></div>
-                                <div class="icon-option btn btn-outline-secondary" data-icon="music-note"><i class="bi bi-music-note"></i></div>
-                                <div class="icon-option btn btn-outline-secondary" data-icon="brush"><i class="bi bi-brush"></i></div>
-                            </div>
-                            <input type="hidden" id="habit_icon" name="habit_icon" value="house">
-                        </div>
+        <!-- Templates Section (hidden by default) -->
+        <div id="templates-section" style="display: none;">
+            <div class="row mb-3">
+                <div class="col">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-sm btn-outline-primary template-filter active" data-filter="all">All</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary template-filter" data-filter="health">Health</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary template-filter" data-filter="mindfulness">Mindfulness</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary template-filter" data-filter="learning">Learning</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary template-filter" data-filter="productivity">Productivity</button>
                     </div>
                 </div>
             </div>
-            
-            <!-- Right Column: Visual Model Selection -->
-            <div class="col-lg-8">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="bi bi-eye me-2"></i>Choose Visual Model *
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted mb-4">Select how you want to visualize and track your habit data</p>
-                        
-                        <div class="row">
-                            {% for model_key, model_info in visual_models.items() %}
-                            <div class="col-md-6 mb-3">
-                                <div class="card visual-model-card h-100" data-model="{{ model_key }}">
-                                    <div class="card-body text-center">
-                                        <div class="visual-model-icon text-primary">
-                                            <i class="bi bi-{{ model_info.icon }}"></i>
-                                        </div>
-                                        <h5 class="card-title">{{ model_info.name }}</h5>
-                                        <p class="card-text text-muted">{{ model_info.description }}</p>
-                                        
-                                        {% if model_key == 'graph' %}
-                                        <small class="best-for-text" style="color: var(--primary);">
-                                            <i class="bi bi-check-circle me-1"></i>Best for: Weight lifting, gardening, quitting bad habits
-                                        </small>
-                                        {% elif model_key == 'progression' %}
-                                        <small class="best-for-text" style="color: var(--primary);">
-                                            <i class="bi bi-check-circle me-1"></i>Best for: Projects, building something, baking
-                                        </small>
-                                        {% elif model_key == 'calendar' %}
-                                        <small class="best-for-text" style="color: var(--primary);">
-                                            <i class="bi bi-check-circle me-1"></i>Best for: Sports sessions, courses, events
-                                        </small>
-                                        {% elif model_key == 'percentage' %}
-                                        <small class="best-for-text" style="color: var(--primary);">
-                                            <i class="bi bi-check-circle me-1"></i>Best for: Big targets, overall progression
-                                        </small>
-                                        {% endif %}
-                                    </div>
-                                    <input type="radio" name="visual_model_type" value="{{ model_key }}" class="d-none" {{ 'checked' if model_key == 'graph' }}>
+
+            <div class="row" id="templates-grid">
+                {% for template in templates %}
+                <div class="col-md-6 col-lg-4 mb-4 template-card" data-tags="{{ template.tags|join(',') }}" data-index="{{ loop.index0 }}">
+                    <div class="card h-100 template-item">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="d-inline-flex align-items-center justify-content-center rounded-circle me-3" style="width: 48px; height: 48px; background: {{ template.theme_color }}20;">
+                                    <i class="bi bi-{{ template.icon }}" style="font-size: 1.4rem; color: {{ template.theme_color }};"></i>
+                                </div>
+                                <div>
+                                    <h5 class="card-title mb-0">{{ template.name }}</h5>
+                                    <span class="badge" style="background: {{ template.theme_color }}; font-size: 0.65rem;">{{ template.visual_model_type|capitalize }}</span>
                                 </div>
                             </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Visual Model Settings -->
-                <div class="card mb-4" id="visual-settings">
-                    <div class="card-header">
-                        <i class="bi bi-gear me-2"></i>Visual Model Settings
-                    </div>
-                    <div class="card-body">
-                        <!-- Graph Settings -->
-                        <div id="graph-settings" class="visual-model-settings">
-                            <h6><i class="bi bi-graph-up me-2"></i>Graph Settings</h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label class="form-label">Graph Type</label>
-                                    <select class="form-select" name="graph_type">
-                                        <option value="line">Line Chart</option>
-                                        <option value="bar">Bar Chart</option>
-                                        <option value="area">Area Chart</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Time Range</label>
-                                    <select class="form-select" name="time_range">
-                                        <option value="7">Last 7 days</option>
-                                        <option value="30" selected>Last 30 days</option>
-                                        <option value="90">Last 90 days</option>
-                                        <option value="365">Last year</option>
-                                    </select>
-                                </div>
+                            <p class="card-text text-muted">{{ template.description }}</p>
+                            <div class="d-flex flex-wrap gap-1 mb-3">
+                                {% for tag in template.tags %}
+                                <span class="badge bg-secondary" style="font-size: 0.65rem;">{{ tag }}</span>
+                                {% endfor %}
                             </div>
                         </div>
-                        
-                        <!-- Progression Settings -->
-                        <div id="progression-settings" class="visual-model-settings" style="display: none;">
-                            <h6><i class="bi bi-layers me-2"></i>Progression Steps</h6>
-                            <div id="steps-container">
-                                <div class="mb-2 step-entry">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" name="step_name[]" placeholder="Step 1 name">
-                                        <button type="button" class="btn btn-outline-danger remove-step"><i class="bi bi-trash"></i></button>
-                                    </div>
-                                    <input type="text" class="form-control mt-1" name="step_desc[]" placeholder="Step 1 description (optional)" style="font-size: 0.85rem;">
-                                </div>
-                            </div>
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="add-step">
-                                <i class="bi bi-plus me-1"></i>Add Step
+                        <div class="card-footer bg-transparent">
+                            <button type="button" class="btn btn-sm btn-primary w-100 use-template-btn" data-index="{{ loop.index0 }}">
+                                <i class="bi bi-check-circle me-1"></i>Use This Template
                             </button>
                         </div>
-                        
-                        <!-- Calendar Settings -->
-                        <div id="calendar-settings" class="visual-model-settings" style="display: none;">
-                            <h6><i class="bi bi-calendar me-2"></i>Calendar Settings</h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label class="form-label">Schedule</label>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" id="everyday" onclick="toggleEveryDay(this)">
-                                        <label class="form-check-label fw-bold" for="everyday" style="color: var(--primary);">Everyday</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="monday" id="monday">
-                                        <label class="form-check-label" for="monday">Monday</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="tuesday" id="tuesday">
-                                        <label class="form-check-label" for="tuesday">Tuesday</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="wednesday" id="wednesday">
-                                        <label class="form-check-label" for="wednesday">Wednesday</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="thursday" id="thursday">
-                                        <label class="form-check-label" for="thursday">Thursday</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="friday" id="friday">
-                                        <label class="form-check-label" for="friday">Friday</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="saturday" id="saturday">
-                                        <label class="form-check-label" for="saturday">Saturday</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="schedule[]" value="sunday" id="sunday">
-                                        <label class="form-check-label" for="sunday">Sunday</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Reminder Time</label>
-                                    <input type="time" class="form-control" name="reminder_time" value="09:00">
-                                    <div class="mt-3">
-                                        <label class="form-label">Times per Day</label>
-                                        <input type="number" class="form-control" name="times_per_day" value="1" min="1" max="99">
-                                        <div class="form-text">How many times can you log this habit per day?</div>
-                                    </div>
-                                </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if not templates %}
+            <div class="card">
+                <div class="card-body empty-state">
+                    <i class="bi bi-inbox text-muted"></i>
+                    <h4>No templates available</h4>
+                    <p>Check back later for new habit templates!</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Custom Form Section -->
+        <div id="custom-section">
+            <div class="row">
+                <!-- Left Column: Basic Info -->
+                <div class="col-lg-4">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="bi bi-info-circle me-2"></i>Basic Information
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Habit Name *</label>
+                                <input type="text" class="form-control" id="name" name="name" required placeholder="e.g., Morning Exercise">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="3" placeholder="What is this habit about?"></textarea>
+                            </div>
+                            
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="is_public" name="is_public">
+                                <label class="form-check-label" for="is_public">Make this habit public</label>
+                                <div class="form-text">Share your progress with the community</div>
                             </div>
                         </div>
-                        
-                        <!-- Percentage Settings -->
-                        <div id="percentage-settings" class="visual-model-settings" style="display: none;">
-                            <h6><i class="bi bi-percent me-2"></i>Percentage Settings</h6>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <label class="form-label">Minimum Value</label>
-                                    <input type="number" class="form-control" name="min_value" value="0">
+                    </div>
+                    
+                    <!-- Customization Panel -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="bi bi-palette me-2"></i>Customization
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Theme Color</label>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <div class="color-option" style="background-color: #10b981;" data-color="#10b981"></div>
+                                    <div class="color-option" style="background-color: #0ea5e9;" data-color="#0ea5e9"></div>
+                                    <div class="color-option" style="background-color: #6366f1;" data-color="#6366f1"></div>
+                                    <div class="color-option" style="background-color: #f59e0b;" data-color="#f59e0b"></div>
+                                    <div class="color-option" style="background-color: #ef4444;" data-color="#ef4444"></div>
+                                    <div class="color-option" style="background-color: #8b5cf6;" data-color="#8b5cf6"></div>
+                                    <div class="color-option" style="background-color: #ec4899;" data-color="#ec4899"></div>
+                                    <div class="color-option" style="background-color: #14b8a6;" data-color="#14b8a6"></div>
+                                    <div class="color-option" style="background-color: #f97316;" data-color="#f97316"></div>
+                                    <div class="color-option" style="background-color: #84cc16;" data-color="#84cc16"></div>
                                 </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Maximum Value</label>
-                                    <input type="number" class="form-control" name="max_value" value="100">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Starting Value</label>
-                                    <input type="number" class="form-control" name="current_value" value="0">
-                                </div>
+                                <input type="hidden" id="theme_color" name="theme_color" value="#10b981">
                             </div>
-                            <div class="mt-3">
-                                <label class="form-label">Unit</label>
-                                <input type="text" class="form-control" name="unit" placeholder="e.g., pages, minutes, km">
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Icon</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <div class="icon-option btn btn-outline-secondary active" data-icon="house"><i class="bi bi-house"></i></div>
+                                    <div class="icon-option btn btn-outline-secondary" data-icon="book"><i class="bi bi-book"></i></div>
+                                    <div class="icon-option btn btn-outline-secondary" data-icon="camera"><i class="bi bi-camera"></i></div>
+                                    <div class="icon-option btn btn-outline-secondary" data-icon="heart"><i class="bi bi-heart"></i></div>
+                                    <div class="icon-option btn btn-outline-secondary" data-icon="star"><i class="bi bi-star"></i></div>
+                                    <div class="icon-option btn btn-outline-secondary" data-icon="egg"><i class="bi bi-egg"></i></div>
+                                    <div class="icon-option btn btn-outline-secondary" data-icon="bicycle"><i class="bi bi-bicycle"></i></div>
+                                    <div class="icon-option btn btn-outline-secondary" data-icon="controller"><i class="bi bi-controller"></i></div>
+                                    <div class="icon-option btn btn-outline-secondary" data-icon="pen"><i class="bi bi-pen"></i></div>
+                                    <div class="icon-option btn btn-outline-secondary" data-icon="laptop"><i class="bi bi-laptop"></i></div>
+                                    <div class="icon-option btn btn-outline-secondary" data-icon="moon"><i class="bi bi-moon"></i></div>
+                                    <div class="icon-option btn btn-outline-secondary" data-icon="droplet"><i class="bi bi-droplet"></i></div>
+                                    <div class="icon-option btn btn-outline-secondary" data-icon="music-note"><i class="bi bi-music-note"></i></div>
+                                    <div class="icon-option btn btn-outline-secondary" data-icon="brush"><i class="bi bi-brush"></i></div>
+                                </div>
+                                <input type="hidden" id="habit_icon" name="habit_icon" value="house">
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Submit Button -->
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="bi bi-check-circle me-2"></i>Create Habit
-                    </button>
+                <!-- Right Column: Visual Model Selection -->
+                <div class="col-lg-8">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="bi bi-eye me-2"></i>Choose Visual Model *
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-4">Select how you want to visualize and track your habit data</p>
+                            
+                            <div class="row">
+                                {% for model_key, model_info in visual_models.items() %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card visual-model-card h-100" data-model="{{ model_key }}">
+                                        <div class="card-body text-center">
+                                            <div class="visual-model-icon text-primary">
+                                                <i class="bi bi-{{ model_info.icon }}"></i>
+                                            </div>
+                                            <h5 class="card-title">{{ model_info.name }}</h5>
+                                            <p class="card-text text-muted">{{ model_info.description }}</p>
+                                            
+                                            {% if model_key == 'graph' %}
+                                            <small class="best-for-text" style="color: var(--primary);">
+                                                <i class="bi bi-check-circle me-1"></i>Best for: Weight lifting, gardening, quitting bad habits
+                                            </small>
+                                            {% elif model_key == 'progression' %}
+                                            <small class="best-for-text" style="color: var(--primary);">
+                                                <i class="bi bi-check-circle me-1"></i>Best for: Projects, building something, baking
+                                            </small>
+                                            {% elif model_key == 'calendar' %}
+                                            <small class="best-for-text" style="color: var(--primary);">
+                                                <i class="bi bi-check-circle me-1"></i>Best for: Sports sessions, courses, events
+                                            </small>
+                                            {% elif model_key == 'percentage' %}
+                                            <small class="best-for-text" style="color: var(--primary);">
+                                                <i class="bi bi-check-circle me-1"></i>Best for: Big targets, overall progression
+                                            </small>
+                                            {% endif %}
+                                        </div>
+                                        <input type="radio" name="visual_model_type" value="{{ model_key }}" class="d-none" {{ 'checked' if model_key == 'graph' }}>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Visual Model Settings -->
+                    <div class="card mb-4" id="visual-settings">
+                        <div class="card-header">
+                            <i class="bi bi-gear me-2"></i>Visual Model Settings
+                        </div>
+                        <div class="card-body">
+                            <!-- Graph Settings -->
+                            <div id="graph-settings" class="visual-model-settings">
+                                <h6><i class="bi bi-graph-up me-2"></i>Graph Settings</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Graph Type</label>
+                                        <select class="form-select" name="graph_type">
+                                            <option value="line">Line Chart</option>
+                                            <option value="bar">Bar Chart</option>
+                                            <option value="area">Area Chart</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Time Range</label>
+                                        <select class="form-select" name="time_range">
+                                            <option value="7">Last 7 days</option>
+                                            <option value="30" selected>Last 30 days</option>
+                                            <option value="90">Last 90 days</option>
+                                            <option value="365">Last year</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Progression Settings -->
+                            <div id="progression-settings" class="visual-model-settings" style="display: none;">
+                                <h6><i class="bi bi-layers me-2"></i>Progression Steps</h6>
+                                <div id="steps-container">
+                                    <div class="mb-2 step-entry">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" name="step_name[]" placeholder="Step 1 name">
+                                            <button type="button" class="btn btn-outline-danger remove-step"><i class="bi bi-trash"></i></button>
+                                        </div>
+                                        <input type="text" class="form-control mt-1" name="step_desc[]" placeholder="Step 1 description (optional)" style="font-size: 0.85rem;">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="add-step">
+                                    <i class="bi bi-plus me-1"></i>Add Step
+                                </button>
+                            </div>
+                            
+                            <!-- Calendar Settings -->
+                            <div id="calendar-settings" class="visual-model-settings" style="display: none;">
+                                <h6><i class="bi bi-calendar me-2"></i>Calendar Settings</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Schedule</label>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="everyday" onclick="toggleEveryDay(this)">
+                                            <label class="form-check-label fw-bold" for="everyday" style="color: var(--primary);">Everyday</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="schedule[]" value="monday" id="monday">
+                                            <label class="form-check-label" for="monday">Monday</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="schedule[]" value="tuesday" id="tuesday">
+                                            <label class="form-check-label" for="tuesday">Tuesday</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="schedule[]" value="wednesday" id="wednesday">
+                                            <label class="form-check-label" for="wednesday">Wednesday</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="schedule[]" value="thursday" id="thursday">
+                                            <label class="form-check-label" for="thursday">Thursday</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="schedule[]" value="friday" id="friday">
+                                            <label class="form-check-label" for="friday">Friday</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="schedule[]" value="saturday" id="saturday">
+                                            <label class="form-check-label" for="saturday">Saturday</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="schedule[]" value="sunday" id="sunday">
+                                            <label class="form-check-label" for="sunday">Sunday</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Reminder Time</label>
+                                        <input type="time" class="form-control" name="reminder_time" value="09:00">
+                                        <div class="mt-3">
+                                            <label class="form-label">Times per Day</label>
+                                            <input type="number" class="form-control" name="times_per_day" value="1" min="1" max="99">
+                                            <div class="form-text">How many times can you log this habit per day?</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Percentage Settings -->
+                            <div id="percentage-settings" class="visual-model-settings" style="display: none;">
+                                <h6><i class="bi bi-percent me-2"></i>Percentage Settings</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Minimum Value</label>
+                                        <input type="number" class="form-control" name="min_value" value="0">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Maximum Value</label>
+                                        <input type="number" class="form-control" name="max_value" value="100">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Starting Value</label>
+                                        <input type="number" class="form-control" name="current_value" value="0">
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <label class="form-label">Unit</label>
+                                    <input type="text" class="form-control" name="unit" placeholder="e.g., pages, minutes, km">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle me-2"></i>Create Habit
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- Hidden template data for JS -->
+        <script type="application/json" id="templates-data">
+            {{ templates | tojson }}
+        </script>
     </form>
 </div>
 
@@ -272,83 +350,206 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        var templatesData = JSON.parse(document.getElementById('templates-data').textContent);
+        var selectedTemplateIndex = -1;
+
+        // Mode toggle
+        var modeBtns = document.querySelectorAll('.create-mode');
+        modeBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                modeBtns.forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+                var mode = this.dataset.mode;
+                document.getElementById('templates-section').style.display = mode === 'templates' ? '' : 'none';
+                document.getElementById('custom-section').style.display = mode === 'custom' ? '' : 'none';
+            });
+        });
+
+        // Template filter
+        var filterBtns = document.querySelectorAll('.template-filter');
+        var cards = document.querySelectorAll('.template-card');
+        filterBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                filterBtns.forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+                var filter = this.dataset.filter;
+                cards.forEach(function(card) {
+                    if (filter === 'all') {
+                        card.style.display = '';
+                    } else {
+                        var tags = card.dataset.tags;
+                        if (tags && tags.indexOf(filter) !== -1) {
+                            card.style.display = '';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+
+        // Use template button - switch to custom mode and pre-fill
+        document.querySelectorAll('.use-template-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var index = parseInt(this.dataset.index);
+                var template = templatesData[index];
+                if (!template) return;
+
+                selectedTemplateIndex = index;
+
+                // Switch to custom mode
+                modeBtns.forEach(function(b) { b.classList.remove('active'); });
+                document.querySelector('[data-mode="custom"]').classList.add('active');
+                document.getElementById('templates-section').style.display = 'none';
+                document.getElementById('custom-section').style.display = '';
+
+                // Fill form fields
+                document.getElementById('name').value = template.name;
+                document.getElementById('description').value = template.description;
+                document.getElementById('theme_color').value = template.theme_color;
+                document.getElementById('habit_icon').value = template.icon;
+
+                // Select the matching color option
+                document.querySelectorAll('.color-option').forEach(function(opt) {
+                    opt.classList.remove('selected');
+                    if (opt.dataset.color === template.theme_color) {
+                        opt.classList.add('selected');
+                    }
+                });
+
+                // Select the matching icon option
+                document.querySelectorAll('.icon-option').forEach(function(opt) {
+                    opt.classList.remove('active');
+                    if (opt.dataset.icon === template.icon) {
+                        opt.classList.add('active');
+                    }
+                });
+
+                // Select the visual model
+                visualModelCards.forEach(function(card) {
+                    card.classList.remove('selected');
+                    if (card.dataset.model === template.visual_model_type) {
+                        card.classList.add('selected');
+                        card.querySelector('input[type="radio"]').checked = true;
+                        // Show correct settings
+                        document.querySelectorAll('.visual-model-settings').forEach(function(s) {
+                            s.style.display = 'none';
+                        });
+                        var settingsEl = document.getElementById(template.visual_model_type + '-settings');
+                        if (settingsEl) settingsEl.style.display = 'block';
+                    }
+                });
+
+                // Fill settings if available
+                if (template.settings) {
+                    var s = template.settings;
+                    if (s.graph_type) {
+                        var gt = document.querySelector('[name="graph_type"]');
+                        if (gt) gt.value = s.graph_type;
+                    }
+                    if (s.time_range) {
+                        var tr = document.querySelector('[name="time_range"]');
+                        if (tr) tr.value = s.time_range;
+                    }
+                    if (s.min_value !== undefined) {
+                        var mv = document.querySelector('[name="min_value"]');
+                        if (mv) mv.value = s.min_value;
+                    }
+                    if (s.max_value !== undefined) {
+                        var xval = document.querySelector('[name="max_value"]');
+                        if (xval) xval.value = s.max_value;
+                    }
+                    if (s.current_value !== undefined) {
+                        var cv = document.querySelector('[name="current_value"]');
+                        if (cv) cv.value = s.current_value;
+                    }
+                    if (s.unit) {
+                        var un = document.querySelector('[name="unit"]');
+                        if (un) un.value = s.unit;
+                    }
+                    if (s.reminder_time) {
+                        var rt = document.querySelector('[name="reminder_time"]');
+                        if (rt) rt.value = s.reminder_time;
+                    }
+                    if (s.times_per_day) {
+                        var tpd = document.querySelector('[name="times_per_day"]');
+                        if (tpd) tpd.value = s.times_per_day;
+                    }
+                    if (s.schedule) {
+                        s.schedule.forEach(function(day) {
+                            var cb = document.querySelector('[name="schedule[]"][value="' + day + '"]');
+                            if (cb) cb.checked = true;
+                        });
+                    }
+                }
+            });
+        });
+
         // Visual model selection
-        const visualModelCards = document.querySelectorAll('.visual-model-card');
-        visualModelCards.forEach(card => {
+        var visualModelCards = document.querySelectorAll('.visual-model-card');
+        visualModelCards.forEach(function(card) {
             card.addEventListener('click', function() {
-                // Remove selected class from all cards
-                visualModelCards.forEach(c => c.classList.remove('selected'));
-                // Add selected class to clicked card
+                visualModelCards.forEach(function(c) { c.classList.remove('selected'); });
                 this.classList.add('selected');
-                // Check the radio button
                 this.querySelector('input[type="radio"]').checked = true;
-                
-                // Show/hide settings
-                const modelType = this.dataset.model;
-                document.querySelectorAll('.visual-model-settings').forEach(settings => {
+                var modelType = this.dataset.model;
+                document.querySelectorAll('.visual-model-settings').forEach(function(settings) {
                     settings.style.display = 'none';
                 });
                 document.getElementById(modelType + '-settings').style.display = 'block';
             });
         });
-        
+
         // Select first card by default
         document.querySelector('.visual-model-card').classList.add('selected');
-        
+
         // Color selection
-        const colorOptions = document.querySelectorAll('.color-option');
-        colorOptions.forEach(option => {
+        var colorOptions = document.querySelectorAll('.color-option');
+        colorOptions.forEach(function(option) {
             option.addEventListener('click', function() {
-                colorOptions.forEach(o => o.classList.remove('selected'));
+                colorOptions.forEach(function(o) { o.classList.remove('selected'); });
                 this.classList.add('selected');
-                const color = this.dataset.color;
-                document.getElementById('theme_color').value = color;
+                document.getElementById('theme_color').value = this.dataset.color;
                 document.querySelectorAll('.best-for-text').forEach(function(el) {
-                    el.style.color = color;
-                });
+                    el.style.color = this.dataset.color;
+                }.bind(this));
             });
         });
-        
+
         // Icon selection
-        const iconOptions = document.querySelectorAll('.icon-option');
-        iconOptions.forEach(option => {
+        var iconOptions = document.querySelectorAll('.icon-option');
+        iconOptions.forEach(function(option) {
             option.addEventListener('click', function() {
-                iconOptions.forEach(o => o.classList.remove('active'));
+                iconOptions.forEach(function(o) { o.classList.remove('active'); });
                 this.classList.add('active');
                 document.getElementById('habit_icon').value = this.dataset.icon;
             });
         });
-        
+
         // Add step button
         document.getElementById('add-step').addEventListener('click', function() {
-            const stepsContainer = document.getElementById('steps-container');
-            const stepCount = stepsContainer.querySelectorAll('.step-entry').length + 1;
-            
-            const stepHtml = `
-                <div class="mb-2 step-entry">
-                    <div class="input-group">
-                        <input type="text" class="form-control" name="step_name[]" placeholder="Step ${stepCount} name">
-                        <button type="button" class="btn btn-outline-danger remove-step"><i class="bi bi-trash"></i></button>
-                    </div>
-                    <input type="text" class="form-control mt-1" name="step_desc[]" placeholder="Step ${stepCount} description (optional)" style="font-size: 0.85rem;">
-                </div>
-            `;
-            
+            var stepsContainer = document.getElementById('steps-container');
+            var stepCount = stepsContainer.querySelectorAll('.step-entry').length + 1;
+            var stepHtml = '<div class="mb-2 step-entry">' +
+                '<div class="input-group">' +
+                '<input type="text" class="form-control" name="step_name[]" placeholder="Step ' + stepCount + ' name">' +
+                '<button type="button" class="btn btn-outline-danger remove-step"><i class="bi bi-trash"></i></button>' +
+                '</div>' +
+                '<input type="text" class="form-control mt-1" name="step_desc[]" placeholder="Step ' + stepCount + ' description (optional)" style="font-size: 0.85rem;">' +
+                '</div>';
             stepsContainer.insertAdjacentHTML('beforeend', stepHtml);
-            
-            const removeBtn = stepsContainer.lastElementChild.querySelector('.remove-step');
-            removeBtn.addEventListener('click', function() {
+            stepsContainer.lastElementChild.querySelector('.remove-step').addEventListener('click', function() {
                 this.closest('.step-entry').remove();
             });
         });
-        
-        // Remove step button
+
+        // Remove step
         document.addEventListener('click', function(e) {
             if (e.target.classList.contains('remove-step')) {
                 e.target.closest('.input-group').remove();
             }
         });
-        
+
         // Every day toggle
         window.toggleEveryDay = function(el) {
             var checked = el.checked;

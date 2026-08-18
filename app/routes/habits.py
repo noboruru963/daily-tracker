@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
+from datetime import datetime, timedelta
 from app import db
 from app.models.habit import Habit
 from app.models.record import Record
@@ -20,6 +21,7 @@ def dashboard():
 @habits_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 def create_habit():
+    from app.services.templates import HABIT_TEMPLATES
     if request.method == 'POST':
         name = request.form.get('name')
         description = request.form.get('description')
@@ -28,7 +30,7 @@ def create_habit():
         
         if not name or not visual_model_type:
             flash('Name and visual model type are required.', 'error')
-            return render_template('habits/create.html', visual_models=Config.VISUAL_MODELS)
+            return render_template('habits/create.html', visual_models=Config.VISUAL_MODELS, templates=HABIT_TEMPLATES)
         
         visual_settings = {}
         visual_settings['theme_color'] = request.form.get('theme_color', '#10b981')
@@ -73,7 +75,7 @@ def create_habit():
         flash('Habit created successfully!', 'success')
         return redirect(url_for('habits.view_habit', habit_id=habit.id))
     
-    return render_template('habits/create.html', visual_models=Config.VISUAL_MODELS)
+    return render_template('habits/create.html', visual_models=Config.VISUAL_MODELS, templates=HABIT_TEMPLATES)
 
 @habits_bp.route('/<int:habit_id>')
 @login_required
@@ -167,3 +169,34 @@ def toggle_pin(habit_id):
     db.session.commit()
     
     return jsonify({'success': True, 'pinned': habit.is_pinned})
+
+@habits_bp.route('/api/streaks')
+@login_required
+def get_streaks():
+    habits = Habit.query.filter_by(user_id=current_user.id).all()
+    streaks = {}
+    for habit in habits:
+        streaks[habit.id] = {
+            'current': habit.get_streak(),
+            'best': habit.get_best_streak(),
+            'total_days': habit.get_total_days()
+        }
+    return jsonify(streaks)
+
+@habits_bp.route('/api/heatmap')
+@login_required
+def get_heatmap_data():
+    one_year_ago = datetime.utcnow() - timedelta(days=365)
+    records = Record.query.join(Habit).filter(
+        Habit.user_id == current_user.id,
+        Record.date >= one_year_ago
+    ).all()
+    
+    day_counts = {}
+    for r in records:
+        d = (r.date.date() if isinstance(r.date, datetime) else r.date).isoformat()
+        day_counts[d] = day_counts.get(d, 0) + 1
+    
+    return jsonify(day_counts)
+
+

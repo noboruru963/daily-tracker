@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from app import db
 
 class Habit(db.Model):
@@ -34,3 +34,55 @@ class Habit(db.Model):
             'is_public': self.is_public,
             'is_pinned': self.is_pinned
         }
+    
+    def get_streak(self):
+        """Calculate current streak (consecutive days with at least one record)."""
+        if not self.records:
+            return 0
+        
+        record_dates = set()
+        for r in self.records:
+            record_dates.add(r.date.date() if isinstance(r.date, datetime) else r.date)
+        
+        today = date.today()
+        streak = 0
+        check_date = today
+        
+        if today not in record_dates:
+            check_date = today - timedelta(days=1)
+        
+        while check_date in record_dates:
+            streak += 1
+            check_date -= timedelta(days=1)
+        
+        return streak
+    
+    def get_best_streak(self):
+        """Calculate the best (longest) streak ever achieved."""
+        if not self.records:
+            return 0
+        
+        record_dates = sorted(set(
+            r.date.date() if isinstance(r.date, datetime) else r.date
+            for r in self.records
+        ))
+        
+        best = 1
+        current = 1
+        for i in range(1, len(record_dates)):
+            if record_dates[i] - record_dates[i - 1] == timedelta(days=1):
+                current += 1
+                best = max(best, current)
+            else:
+                current = 1
+        
+        return best
+    
+    def get_total_days(self):
+        """Get total number of unique days with records."""
+        if not self.records:
+            return 0
+        return len(set(
+            r.date.date() if isinstance(r.date, datetime) else r.date
+            for r in self.records
+        ))

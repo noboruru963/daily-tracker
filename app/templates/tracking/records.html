@@ -63,7 +63,12 @@
                                 <tbody>
                                     {% for record in records %}
                                     <tr>
-                                        <td>{{ record.date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>
+                                            {% if record.record_icon %}
+                                            <i class="bi bi-{{ record.record_icon }} me-1" style="color: {{ habit.visual_settings.get('theme_color', '#10b981') }};"></i>
+                                            {% endif %}
+                                            {{ record.date.strftime('%Y-%m-%d %H:%M') }}
+                                        </td>
                                         <td><strong>{{ record.numerical_value }}</strong></td>
                                         <td>{{ record.description or '-' }}</td>
                                         {% if habit.visual_model_type == 'progression' %}
@@ -100,7 +105,10 @@
                             <div class="col-md-6 col-lg-4 mb-4">
                                 <div class="card h-100">
                                     <div class="card-header d-flex justify-content-between align-items-center">
-                                        <span class="badge bg-primary">{{ record.date.strftime('%Y-%m-%d') }}</span>
+                                        <span class="badge bg-primary">
+                                            {% if record.record_icon %}<i class="bi bi-{{ record.record_icon }} me-1"></i>{% endif %}
+                                            {{ record.date.strftime('%Y-%m-%d') }}
+                                        </span>
                                         <span class="badge bg-success">{{ record.numerical_value }}</span>
                                     </div>
                                     <div class="card-body">

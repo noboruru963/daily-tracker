@@ -26,12 +26,28 @@
         {% if layout == 'list' %}
         <div class="list-group">
             {% for habit in pinned_habits %}
+            {% set current_streak = habit.get_streak() %}
+            {% set best_streak = habit.get_best_streak() %}
             <div class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
                 <div class="d-flex align-items-center">
                     <span class="fw-bold me-3" style="color: var(--primary);">
                         <i class="bi bi-{{ habit.visual_settings.get('icon', 'house') }} me-1"></i>{{ habit.name }}
                     </span>
                     <span class="badge" style="background: var(--primary);">{{ habit.visual_model_type|capitalize }}</span>
+                    {% if current_streak > 0 %}
+                    <span class="badge ms-2 streak-badge" title="{{ current_streak }} day streak!">
+                        <i class="bi bi-fire"></i> {{ current_streak }}
+                    </span>
+                    {% endif %}
+                    {% if best_streak >= 365 %}
+                    <span class="badge ms-1 milestone-badge milestone-365" title="365+ day streak!"><i class="bi bi-gem"></i></span>
+                    {% elif best_streak >= 100 %}
+                    <span class="badge ms-1 milestone-badge milestone-100" title="100+ day streak!"><i class="bi bi-trophy"></i></span>
+                    {% elif best_streak >= 30 %}
+                    <span class="badge ms-1 milestone-badge milestone-30" title="30+ day streak!"><i class="bi bi-star"></i></span>
+                    {% elif best_streak >= 7 %}
+                    <span class="badge ms-1 milestone-badge milestone-7" title="7+ day streak!"><i class="bi bi-emoji-smile"></i></span>
+                    {% endif %}
                     {% if habit.visual_model_type == 'percentage' %}
                     {% set current = habit.visual_settings.get('current_value', 0) %}
                     {% set max_val = habit.visual_settings.get('max_value', 100) %}
@@ -68,6 +84,8 @@
         {% else %}
         <div class="row">
             {% for habit in pinned_habits %}
+            {% set current_streak = habit.get_streak() %}
+            {% set best_streak = habit.get_best_streak() %}
             <div class="col-md-6 col-lg-4 mb-3">
                 <div class="card habit-card widget-card fade-in" style="border-left: 4px solid var(--primary);">
                     <div class="card-body" style="padding: 0.75rem 1rem;">
@@ -75,9 +93,25 @@
                             <span class="fw-bold" style="color: var(--primary);">
                                 <i class="bi bi-{{ habit.visual_settings.get('icon', 'house') }} me-1"></i>{{ habit.name }}
                             </span>
-                            <button class="btn btn-sm btn-pin pinned" onclick="togglePin({{ habit.id }})" title="Unpin">
-                                <i class="bi bi-pin-angle-fill"></i>
-                            </button>
+                            <div class="d-flex gap-1 align-items-center">
+                                {% if current_streak > 0 %}
+                                <span class="badge streak-badge" title="{{ current_streak }} day streak!">
+                                    <i class="bi bi-fire"></i> {{ current_streak }}
+                                </span>
+                                {% endif %}
+                                {% if best_streak >= 365 %}
+                                <span class="badge milestone-badge milestone-365" title="365+ day streak!"><i class="bi bi-gem"></i></span>
+                                {% elif best_streak >= 100 %}
+                                <span class="badge milestone-badge milestone-100" title="100+ day streak!"><i class="bi bi-trophy"></i></span>
+                                {% elif best_streak >= 30 %}
+                                <span class="badge milestone-badge milestone-30" title="30+ day streak!"><i class="bi bi-star"></i></span>
+                                {% elif best_streak >= 7 %}
+                                <span class="badge milestone-badge milestone-7" title="7+ day streak!"><i class="bi bi-emoji-smile"></i></span>
+                                {% endif %}
+                                <button class="btn btn-sm btn-pin pinned" onclick="togglePin({{ habit.id }})" title="Unpin">
+                                    <i class="bi bi-pin-angle-fill"></i>
+                                </button>
+                            </div>
                         </div>
                         
                         {% if habit.visual_model_type == 'percentage' %}
@@ -120,6 +154,30 @@
             {% endfor %}
         </div>
         {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Activity Heatmap -->
+    {% if habits %}
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-grid-3x3 me-2"></i>Activity Heatmap</span>
+            <small class="text-muted" id="heatmap-summary">Loading...</small>
+        </div>
+        <div class="card-body">
+            <div class="heatmap-container" id="heatmapContainer"></div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <small class="text-muted">Less</small>
+                <div class="heatmap-legend">
+                    <div class="heatmap-cell level-0" title="No activity"></div>
+                    <div class="heatmap-cell level-1" title="1-2 records"></div>
+                    <div class="heatmap-cell level-2" title="3-5 records"></div>
+                    <div class="heatmap-cell level-3" title="6-9 records"></div>
+                    <div class="heatmap-cell level-4" title="10+ records"></div>
+                </div>
+                <small class="text-muted">More</small>
+            </div>
+        </div>
     </div>
     {% endif %}
 
@@ -170,6 +228,8 @@
     {% if layout == 'list' %}
     <div class="list-group">
         {% for habit in unpinned_habits %}
+        {% set current_streak = habit.get_streak() %}
+        {% set best_streak = habit.get_best_streak() %}
         <div class="list-group-item d-flex justify-content-between align-items-center px-3 py-3">
             <div class="d-flex align-items-center flex-grow-1">
                 <div class="d-flex justify-content-between align-items-center w-100" style="max-width: 500px;">
@@ -181,6 +241,20 @@
                             <i class="bi bi-{{ habit.visual_settings.get('icon', 'house') }} me-2"></i>
                             {{ habit.name }}
                         </span>
+                        {% if current_streak > 0 %}
+                        <span class="badge ms-2 streak-badge" title="{{ current_streak }} day streak!">
+                            <i class="bi bi-fire"></i> {{ current_streak }}
+                        </span>
+                        {% endif %}
+                        {% if best_streak >= 365 %}
+                        <span class="badge ms-1 milestone-badge milestone-365" title="365+ day streak!"><i class="bi bi-gem"></i></span>
+                        {% elif best_streak >= 100 %}
+                        <span class="badge ms-1 milestone-badge milestone-100" title="100+ day streak!"><i class="bi bi-trophy"></i></span>
+                        {% elif best_streak >= 30 %}
+                        <span class="badge ms-1 milestone-badge milestone-30" title="30+ day streak!"><i class="bi bi-star"></i></span>
+                        {% elif best_streak >= 7 %}
+                        <span class="badge ms-1 milestone-badge milestone-7" title="7+ day streak!"><i class="bi bi-emoji-smile"></i></span>
+                        {% endif %}
                     </div>
                     <div class="d-flex align-items-center gap-3 flex-wrap">
                         <span class="badge" style="background: var(--primary);">{{ habit.visual_model_type|capitalize }}</span>
@@ -225,6 +299,8 @@
     {% else %}
     <div class="row">
         {% for habit in unpinned_habits %}
+        {% set current_streak = habit.get_streak() %}
+        {% set best_streak = habit.get_best_streak() %}
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card habit-card fade-in">
                 <div class="card-header d-flex justify-content-between align-items-center" style="border-top: 3px solid var(--primary);">
@@ -232,7 +308,21 @@
                         <i class="bi bi-{{ habit.visual_settings.get('icon', 'house') }} me-2"></i>
                         {{ habit.name }}
                     </span>
-                    <div class="d-flex gap-1">
+                    <div class="d-flex gap-1 align-items-center">
+                        {% if current_streak > 0 %}
+                        <span class="badge streak-badge" title="{{ current_streak }} day streak!">
+                            <i class="bi bi-fire"></i> {{ current_streak }}
+                        </span>
+                        {% endif %}
+                        {% if best_streak >= 365 %}
+                        <span class="badge milestone-badge milestone-365" title="365+ day streak!"><i class="bi bi-gem"></i></span>
+                        {% elif best_streak >= 100 %}
+                        <span class="badge milestone-badge milestone-100" title="100+ day streak!"><i class="bi bi-trophy"></i></span>
+                        {% elif best_streak >= 30 %}
+                        <span class="badge milestone-badge milestone-30" title="30+ day streak!"><i class="bi bi-star"></i></span>
+                        {% elif best_streak >= 7 %}
+                        <span class="badge milestone-badge milestone-7" title="7+ day streak!"><i class="bi bi-emoji-smile"></i></span>
+                        {% endif %}
                         <button class="btn btn-sm btn-outline-secondary btn-pin" onclick="togglePin({{ habit.id }})" title="Pin to top">
                             <i class="bi bi-pin"></i>
                         </button>
@@ -345,7 +435,112 @@ document.addEventListener('DOMContentLoaded', function() {
     {% if calendar_habits %}
         initCombinedCalendar();
     {% endif %}
+    initHeatmap();
 });
+
+function initHeatmap() {
+    var container = document.getElementById('heatmapContainer');
+    if (!container) return;
+    
+    fetch('/habits/api/heatmap')
+        .then(function(r) { return r.json(); })
+        .then(function(dayCounts) {
+            var today = new Date();
+            var startDate = new Date(today);
+            startDate.setDate(startDate.getDate() - 364);
+            
+            while (startDate.getDay() !== 0) {
+                startDate.setDate(startDate.getDate() - 1);
+            }
+            
+            var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var monthsDiv = document.createElement('div');
+            monthsDiv.className = 'heatmap-month-labels';
+            monthsDiv.style.paddingLeft = '30px';
+            
+            var totalRecords = 0;
+            var activeDays = 0;
+            
+            var grid = document.createElement('div');
+            grid.className = 'heatmap-grid';
+            
+            var currentDate = new Date(startDate);
+            var lastMonth = -1;
+            var weekDiv = document.createElement('div');
+            weekDiv.className = 'heatmap-week';
+            
+            var dayLabels = document.createElement('div');
+            dayLabels.className = 'heatmap-week';
+            dayLabels.style.marginRight = '3px';
+            var labels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+            labels.forEach(function(l) {
+                var cell = document.createElement('div');
+                cell.style.fontSize = '0.7rem';
+                cell.style.color = 'var(--text-muted)';
+                cell.style.height = '14px';
+                cell.style.lineHeight = '14px';
+                cell.textContent = l;
+                dayLabels.appendChild(cell);
+            });
+            grid.appendChild(dayLabels);
+            
+            while (currentDate <= today) {
+                var dayOfWeek = currentDate.getDay();
+                var dateStr = currentDate.toISOString().split('T')[0];
+                var count = dayCounts[dateStr] || 0;
+                
+                if (count > 0) {
+                    totalRecords += count;
+                    activeDays++;
+                }
+                
+                var cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+                if (count === 0) cell.classList.add('level-0');
+                else if (count <= 2) cell.classList.add('level-1');
+                else if (count <= 5) cell.classList.add('level-2');
+                else if (count <= 9) cell.classList.add('level-3');
+                else cell.classList.add('level-4');
+                
+                cell.title = dateStr + ': ' + count + ' record' + (count !== 1 ? 's' : '');
+                
+                if (currentDate.getMonth() !== lastMonth) {
+                    var monthLabel = document.createElement('div');
+                    monthLabel.style.fontSize = '0.7rem';
+                    monthLabel.style.color = 'var(--text-muted)';
+                    monthLabel.style.height = '14px';
+                    monthLabel.style.lineHeight = '14px';
+                    monthLabel.textContent = monthNames[currentDate.getMonth()];
+                    monthsDiv.appendChild(monthLabel);
+                    lastMonth = currentDate.getMonth();
+                }
+                
+                weekDiv.appendChild(cell);
+                
+                if (dayOfWeek === 6 || currentDate.getTime() === today.getTime()) {
+                    while (weekDiv.children.length < 7) {
+                        var empty = document.createElement('div');
+                        empty.style.height = '14px';
+                        weekDiv.appendChild(empty);
+                    }
+                    grid.appendChild(weekDiv);
+                    weekDiv = document.createElement('div');
+                    weekDiv.className = 'heatmap-week';
+                }
+                
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            container.innerHTML = '';
+            container.appendChild(monthsDiv);
+            container.appendChild(grid);
+            
+            var summary = document.getElementById('heatmap-summary');
+            if (summary) {
+                summary.textContent = totalRecords + ' records across ' + activeDays + ' days in the last year';
+            }
+        });
+}
 
 function togglePin(habitId) {
     fetch('/habits/' + habitId + '/pin', {

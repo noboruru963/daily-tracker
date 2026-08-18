@@ -86,7 +86,8 @@ def add_record(habit_id):
             habit_id=habit_id,
             numerical_value=numerical_value,
             description=description,
-            date=parsed_date
+            date=parsed_date,
+            record_icon=record_icon
         )
         
         if habit.visual_model_type == 'progression':
@@ -101,7 +102,8 @@ def add_record(habit_id):
             habit.visual_settings['current_step'] = record.step_number + 1
             flag_modified(habit, 'visual_settings')
         elif habit.visual_model_type == 'calendar':
-            record.time_spent = float(request.form.get('time_spent', 0))
+            time_spent_raw = request.form.get('time_spent', '0')
+            record.time_spent = float(time_spent_raw) if time_spent_raw else 0
             act_type = request.form.get('activity_type', '')
             record.activity_type = act_type if act_type else ''
         elif habit.visual_model_type == 'percentage':
