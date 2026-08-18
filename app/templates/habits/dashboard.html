@@ -162,18 +162,18 @@
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-sm btn-outline-primary view-toggle active" data-view="heatmap">
-                    <i class="bi bi-grid-3x3 me-1"></i>Heatmap
-                </button>
-                <button class="btn btn-sm btn-outline-primary view-toggle" data-view="calendar">
+                <button class="btn btn-sm btn-outline-primary view-toggle active" data-view="calendar">
                     <i class="bi bi-calendar me-1"></i>Calendar
+                </button>
+                <button class="btn btn-sm btn-outline-primary view-toggle" data-view="heatmap">
+                    <i class="bi bi-grid-3x3 me-1"></i>Heatmap
                 </button>
             </div>
             <small class="text-muted" id="heatmap-summary">Loading...</small>
         </div>
         <div class="card-body">
             <!-- Heatmap View -->
-            <div id="heatmap-view">
+            <div id="heatmap-view" style="display: none;">
                 <div class="heatmap-container" id="heatmapContainer"></div>
                 <div class="d-flex justify-content-between align-items-center mt-2">
                     <small class="text-muted">Less</small>
@@ -189,7 +189,7 @@
             </div>
 
             <!-- Calendar View -->
-            <div id="calendar-view" style="display: none;">
+            <div id="calendar-view">
                 {% set calendar_habits = habits|selectattr('visual_model_type', 'equalto', 'calendar')|list %}
                 {% if calendar_habits %}
                 <div class="row mb-3">
