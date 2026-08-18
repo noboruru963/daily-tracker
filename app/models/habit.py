@@ -45,11 +45,13 @@ class Habit(db.Model):
             record_dates.add(r.date.date() if isinstance(r.date, datetime) else r.date)
         
         today = date.today()
-        streak = 0
-        check_date = today
+        max_record_date = max(record_dates)
         
-        if today not in record_dates:
-            check_date = today - timedelta(days=1)
+        # Allow up to 2 days ahead to account for timezone differences
+        start_date = max(today, min(max_record_date, today + timedelta(days=2)))
+        
+        streak = 0
+        check_date = start_date
         
         while check_date in record_dates:
             streak += 1
