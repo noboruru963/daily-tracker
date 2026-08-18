@@ -434,6 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var summary = document.getElementById('heatmap-summary');
             if (view === 'calendar') {
                 summary.textContent = '';
+                renderCombinedCalendar();
             }
         });
     });
@@ -453,8 +454,7 @@ document.addEventListener('DOMContentLoaded', function() {
             initListGraph({{ habit.id }});
         {% endif %}
     {% endfor %}
-    {% set calendar_habits = habits|selectattr('visual_model_type', 'equalto', 'calendar')|list %}
-    {% if calendar_habits %}
+    {% if habits %}
         initCombinedCalendar();
     {% endif %}
     initHeatmap();
@@ -808,18 +808,17 @@ function renderCombinedCalendar() {
             for (var day = 1; day <= daysInMonth; day++) {
                 var dayElement = document.createElement('div');
                 dayElement.className = 'calendar-day';
-                dayElement.textContent = day;
                 dayElement.dataset.day = day;
+                var numEl = document.createElement('div');
+                numEl.className = 'day-number';
+                numEl.textContent = day;
+                dayElement.appendChild(numEl);
                 if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
                     dayElement.classList.add('today');
                 }
                 dayElement.addEventListener('click', function() {
-                    var d = this.dataset.day;
-                    if (!d) return;
-                    var dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-                    if (calendarHabitIds.length > 0) {
-                        window.location.href = '/tracking/' + calendarHabitIds[0] + '/add?date=' + dateStr;
-                    }
+                    calendarView.querySelectorAll('.calendar-day.selected').forEach(function(el) { el.classList.remove('selected'); });
+                    this.classList.add('selected');
                 });
                 calendarView.appendChild(dayElement);
             }
