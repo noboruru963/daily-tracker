@@ -229,7 +229,7 @@ def get_daily_count(habit_id):
 @tracking_bp.route('/api/calendar-habits')
 @login_required
 def get_calendar_habits_data():
-    habits = Habit.query.filter_by(user_id=current_user.id, visual_model_type='calendar').all()
+    habits = Habit.query.filter_by(user_id=current_user.id).all()
     result = []
     for habit in habits:
         records = Record.query.filter_by(habit_id=habit.id).order_by(Record.date.asc()).all()

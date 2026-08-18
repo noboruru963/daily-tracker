@@ -689,6 +689,7 @@ function renderCombinedCalendar() {
     if (!calendarView || !currentMonth) return;
     
     var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
     var year = combinedCalendarDate.getFullYear();
     var month = combinedCalendarDate.getMonth();
     currentMonth.textContent = monthNames[month] + ' ' + year;
@@ -713,17 +714,19 @@ function renderCombinedCalendar() {
                 return {
                     id: item.habit.id,
                     name: item.habit.name,
-                    color: item.habit.visual_settings && item.habit.visual_settings.theme_color ? item.habit.visual_settings.theme_color : '#10b981'
+                    type: item.habit.visual_model_type,
+                    color: item.habit.visual_settings && item.habit.visual_settings.theme_color ? item.habit.visual_settings.theme_color : '#10b981',
+                    schedule: item.habit.visual_settings && item.habit.visual_settings.schedule ? item.habit.visual_settings.schedule : []
                 };
             });
-            var recordSet = {};
+            var recordDates = {};
             data.forEach(function(item) {
                 item.records.forEach(function(rec) {
                     var d = new Date(rec.date);
                     if (d.getFullYear() === year && d.getMonth() === month) {
                         var day = d.getDate();
-                        if (!recordSet[day]) recordSet[day] = [];
-                        recordSet[day].push({ id: item.habit.id, name: item.habit.name, color: item.habit.visual_settings.theme_color || '#10b981' });
+                        if (!recordDates[day]) recordDates[day] = {};
+                        recordDates[day][item.habit.id] = true;
                     }
                 });
             });
@@ -741,43 +744,43 @@ function renderCombinedCalendar() {
                     dayElement.classList.add('today');
                 }
                 
-                var activities = recordSet[day] || [];
-                if (activities.length > 0) {
-                    dayElement.classList.add('has-record');
-                    var actDiv = document.createElement('div');
-                    actDiv.className = 'day-activities';
-                    var shown = activities.slice(0, 3);
-                    shown.forEach(function(act) {
-                        var actEl = document.createElement('div');
-                        actEl.className = 'day-activity';
-                        actEl.style.background = act.color;
-                        actEl.textContent = act.name;
-                        actDiv.appendChild(actEl);
-                    });
-                    if (activities.length > 3) {
-                        var moreEl = document.createElement('div');
-                        moreEl.className = 'day-more';
-                        moreEl.textContent = '+' + (activities.length - 3) + ' more';
-                        actDiv.appendChild(moreEl);
+                var dateObj = new Date(year, month, day);
+                var dayOfWeek = dayNames[dateObj.getDay()];
+                
+                var actDiv = document.createElement('div');
+                actDiv.className = 'day-activities';
+                
+                var shownCount = 0;
+                habitInfo.forEach(function(h) {
+                    var isScheduled = false;
+                    if (h.type === 'calendar' && h.schedule.length > 0) {
+                        isScheduled = h.schedule.indexOf(dayOfWeek) !== -1;
+                    } else {
+                        isScheduled = true;
                     }
+                    if (!isScheduled) return;
+                    
+                    var completed = !!(recordDates[day] && recordDates[day][h.id]);
+                    var actEl = document.createElement('div');
+                    actEl.className = 'day-activity' + (completed ? ' completed' : '');
+                    actEl.style.background = completed ? h.color : 'transparent';
+                    actEl.style.color = completed ? 'white' : h.color;
+                    actEl.style.border = '1px solid ' + h.color;
+                    
+                    var label = completed ? '\u2713 ' + h.name : h.name;
+                    actEl.textContent = label;
+                    actEl.title = h.name + (completed ? ' - completed' : ' - pending');
+                    actDiv.appendChild(actEl);
+                    shownCount++;
+                });
+                
+                if (shownCount > 0) {
                     dayElement.appendChild(actDiv);
-                } else {
-                    habitInfo.forEach(function(h) {
-                        var node = document.createElement('span');
-                        node.className = 'habit-node';
-                        node.style.borderColor = h.color;
-                        node.title = h.name + ' - not completed';
-                        dayElement.appendChild(node);
-                    });
                 }
                 
                 dayElement.addEventListener('click', function() {
-                    var d = this.dataset.day;
-                    if (!d) return;
-                    var dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-                    if (calendarHabitIds.length > 0) {
-                        window.location.href = '/tracking/' + calendarHabitIds[0] + '/add?date=' + dateStr;
-                    }
+                    calendarView.querySelectorAll('.calendar-day.selected').forEach(function(el) { el.classList.remove('selected'); });
+                    this.classList.add('selected');
                 });
                 calendarView.appendChild(dayElement);
             }
