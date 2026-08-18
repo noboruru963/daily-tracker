@@ -314,6 +314,34 @@ body {
     color: white;
 }
 
+.calendar-day .day-dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    width: 100%;
+    padding: 1px 0;
+}
+
+.calendar-day .day-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid;
+    flex-shrink: 0;
+}
+
+.calendar-day .day-dot.completed {
+    border-color: transparent;
+}
+
+.calendar-day .day-count {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    text-align: left;
+    line-height: 1.2;
+    padding-left: 1px;
+}
+
 .calendar-day .day-more {
     font-size: 0.55rem;
     color: var(--text-muted);
@@ -330,7 +358,7 @@ body {
 .calendar-day.selected {
     background: var(--primary-light);
     border-color: var(--primary);
-    box-shadow: 0 0 0 2px var(--primary-light);
+    box-shadow: inset 0 0 0 1px var(--primary);
 }
 
 .calendar-day:not(.selected):not(.today):hover { background: var(--bg-hover); }

@@ -750,7 +750,7 @@ function renderCombinedCalendar() {
                 var actDiv = document.createElement('div');
                 actDiv.className = 'day-activities';
                 
-                var shownCount = 0;
+                var scheduledHabits = [];
                 habitInfo.forEach(function(h) {
                     var isScheduled = false;
                     if (h.type === 'calendar' && h.schedule.length > 0) {
@@ -759,22 +759,41 @@ function renderCombinedCalendar() {
                         isScheduled = true;
                     }
                     if (!isScheduled) return;
-                    
                     var completed = !!(recordDates[day] && recordDates[day][h.id]);
-                    var actEl = document.createElement('div');
-                    actEl.className = 'day-activity' + (completed ? ' completed' : '');
-                    actEl.style.background = completed ? h.color : 'transparent';
-                    actEl.style.color = completed ? 'white' : h.color;
-                    actEl.style.border = '1px solid ' + h.color;
-                    
-                    var label = completed ? '\u2713 ' + h.name : h.name;
-                    actEl.textContent = label;
-                    actEl.title = h.name + (completed ? ' - completed' : ' - pending');
-                    actDiv.appendChild(actEl);
-                    shownCount++;
+                    scheduledHabits.push({ id: h.id, name: h.name, color: h.color, completed: completed });
                 });
                 
-                if (shownCount > 0) {
+                if (scheduledHabits.length <= 2) {
+                    scheduledHabits.forEach(function(h) {
+                        var actEl = document.createElement('div');
+                        actEl.className = 'day-activity' + (h.completed ? ' completed' : '');
+                        actEl.style.background = h.completed ? h.color : 'transparent';
+                        actEl.style.color = h.completed ? 'white' : h.color;
+                        actEl.style.border = '1px solid ' + h.color;
+                        actEl.textContent = h.completed ? '\u2713 ' + h.name : h.name;
+                        actEl.title = h.name + (h.completed ? ' - completed' : ' - pending');
+                        actDiv.appendChild(actEl);
+                    });
+                } else {
+                    var dotsDiv = document.createElement('div');
+                    dotsDiv.className = 'day-dots';
+                    scheduledHabits.forEach(function(h) {
+                        var dot = document.createElement('span');
+                        dot.className = 'day-dot' + (h.completed ? ' completed' : '');
+                        dot.style.background = h.completed ? h.color : 'transparent';
+                        dot.style.borderColor = h.color;
+                        dot.title = h.name + (h.completed ? ' - completed' : ' - pending');
+                        dotsDiv.appendChild(dot);
+                    });
+                    actDiv.appendChild(dotsDiv);
+                    var countEl = document.createElement('div');
+                    countEl.className = 'day-count';
+                    var doneCount = scheduledHabits.filter(function(h) { return h.completed; }).length;
+                    countEl.textContent = doneCount + '/' + scheduledHabits.length;
+                    actDiv.appendChild(countEl);
+                }
+                
+                if (scheduledHabits.length > 0) {
                     dayElement.appendChild(actDiv);
                 }
                 
