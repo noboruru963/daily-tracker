@@ -24,6 +24,9 @@ class Record(db.Model):
     # Manual ordering (used when the user drags records into a custom order)
     sort_order = db.Column(db.Integer, default=0)
     
+    # Record icon (optional icon chosen when adding a record)
+    record_icon = db.Column(db.String(50), default='')
+    
     def __repr__(self):
         return f'<Record {self.id} for Habit {self.habit_id}>'
     
@@ -38,5 +41,6 @@ class Record(db.Model):
             'step_name': self.step_name,
             'time_spent': self.time_spent,
             'activity_type': self.activity_type or '',
-            'target_value': self.target_value
+            'target_value': self.target_value,
+            'record_icon': self.record_icon or ''
         }

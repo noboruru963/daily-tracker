@@ -8,7 +8,7 @@
         <div class="col-md-8 col-lg-6">
             <div class="card">
                 <div class="card-body text-center p-5">
-                    <i class="bi bi-check-circle-fill mb-3" style="font-size: 4rem; background: linear-gradient(135deg, #10b981, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                    <i class="bi bi-check-circle-fill mb-3" style="font-size: 4rem; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
                     <h2 class="fw-bold">Daily Habit Tracker</h2>
                     <p class="text-muted">Build better habits, one day at a time.</p>
                     
@@ -19,7 +19,8 @@
                         <div class="ms-3 mb-4">
                             <label for="version-selector" class="form-label">Select Version</label>
                             <select class="form-select" id="version-selector" style="max-width: 200px;">
-                                <option value="2.1" selected>v2.1 - Latest</option>
+                                <option value="2.2" selected>v2.2 - Latest</option>
+                                <option value="2.1">v2.1 - Bug Fixes</option>
                                 <option value="2.0">v2.0 - Major Update</option>
                                 <option value="1.2">v1.2 - Previous Update</option>
                             </select>
@@ -35,7 +36,27 @@
                         
                         <h5 class="fw-bold mb-3 mt-4"><i class="bi bi-journal-text me-2"></i>Update Log</h5>
                         <div class="ms-3">
-                            <div id="changelog-v2.1" class="mb-3 p-3 bg-light rounded">
+                            <div id="changelog-v2.2" class="mb-3 p-3 bg-light rounded">
+                                <strong>v2.2</strong> <span class="text-muted">- New Features & Theme Integration</span>
+                                <ul class="mt-2 mb-0">
+                                    <li><strong>Streak Tracking</strong> - Current and best streak badges with fire icon on all habit cards</li>
+                                    <li><strong>Activity Heatmap</strong> - GitHub-style contribution graph showing your activity over the past year</li>
+                                    <li><strong>Milestone Badges</strong> - Visual achievement badges for 7, 30, 100, and 365 day streaks</li>
+                                    <li><strong>Habit Templates</strong> - 12 pre-built templates now integrated directly into Create Habit page with Use Template / Create Custom toggle</li>
+                                    <li><strong>Community Habits</strong> - 6 placeholder public habits (Read, Water, Meditation, Workout, Learn, Guitar) for community section</li>
+                                    <li><strong>Calorie Tracker</strong> - Track daily calorie intake with food tags, meal logging, and progress visualization</li>
+                                    <li><strong>Email Validation</strong> - Registration now requires a valid email provider (Gmail, Yahoo, Outlook, etc.)</li>
+                                    <li><strong>Record Icons</strong> - Choose an icon when adding a record, now displayed in Recent Records</li>
+                                    <li><strong>Theme Color Integration</strong> - All accent elements (alerts, navbar, tables, badges, charts) now follow your chosen primary color</li>
+                                    <li><strong>Defaults to Custom Mode</strong> - Create Habit page now opens in custom mode instead of template mode</li>
+                                    <li>Fixed record creation crash when time_spent field is empty</li>
+                                    <li>Fixed flash messages not following theme color</li>
+                                    <li>Fixed hardcoded green in dark mode navbar, table hover, list group badges, and calorie charts</li>
+                                    <li>Fixed visual model cards and theme options showing solid green background on hover/select</li>
+                                    <li>Fixed Create Habit page crashing due to missing templates variable</li>
+                                </ul>
+                            </div>
+                            <div id="changelog-v2.1" class="mb-3 p-3 bg-light rounded" style="display: none;">
                                 <strong>v2.1</strong> <span class="text-muted">- Bug Fixes & Improvements</span>
                                 <ul class="mt-2 mb-0">
                                     <li>Removed empty icon option from habit creation/edit</li>
@@ -99,13 +120,16 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var selector = document.getElementById('version-selector');
+    var versions = ['2.2', '2.1', '2.0', '1.2'];
     if (selector) {
         selector.addEventListener('change', function() {
             var version = this.value;
-            document.getElementById('changelog-v2.1').style.display = 'none';
-            document.getElementById('changelog-v2.0').style.display = 'none';
-            document.getElementById('changelog-v1.2').style.display = 'none';
-            document.getElementById('changelog-v' + version).style.display = 'block';
+            versions.forEach(function(v) {
+                var el = document.getElementById('changelog-v' + v);
+                if (el) el.style.display = 'none';
+            });
+            var active = document.getElementById('changelog-v' + version);
+            if (active) active.style.display = 'block';
         });
     }
 });

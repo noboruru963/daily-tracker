@@ -86,7 +86,8 @@ def add_record(habit_id):
             habit_id=habit_id,
             numerical_value=numerical_value,
             description=description,
-            date=parsed_date
+            date=parsed_date,
+            record_icon=record_icon
         )
         
         if habit.visual_model_type == 'progression':
@@ -101,7 +102,8 @@ def add_record(habit_id):
             habit.visual_settings['current_step'] = record.step_number + 1
             flag_modified(habit, 'visual_settings')
         elif habit.visual_model_type == 'calendar':
-            record.time_spent = float(request.form.get('time_spent', 0))
+            time_spent_raw = request.form.get('time_spent', '0')
+            record.time_spent = float(time_spent_raw) if time_spent_raw else 0
             act_type = request.form.get('activity_type', '')
             record.activity_type = act_type if act_type else ''
         elif habit.visual_model_type == 'percentage':
@@ -227,7 +229,7 @@ def get_daily_count(habit_id):
 @tracking_bp.route('/api/calendar-habits')
 @login_required
 def get_calendar_habits_data():
-    habits = Habit.query.filter_by(user_id=current_user.id, visual_model_type='calendar').all()
+    habits = Habit.query.filter_by(user_id=current_user.id).all()
     result = []
     for habit in habits:
         records = Record.query.filter_by(habit_id=habit.id).order_by(Record.date.asc()).all()
