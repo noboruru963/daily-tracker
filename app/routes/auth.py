@@ -13,6 +13,19 @@ ALLOWED_EMAIL_DOMAINS = {
     'inbox.com', 'icloud.com', 'msn.com', 'windowslive.com',
 }
 
+
+def validate_password(password):
+    if not isinstance(password, str) or not password:
+        return False, 'Password is required.'
+    if len(password) < 8:
+        return False, 'Password must be at least 8 characters long.'
+    if not any(character.isupper() for character in password):
+        return False, 'Password must contain at least one capital letter.'
+    if not any(not character.isalnum() and not character.isspace() for character in password):
+        return False, 'Password must contain at least one symbol.'
+    return True, ''
+
+
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -39,8 +52,9 @@ def register():
             flash('Passwords do not match.', 'error')
             return render_template('auth/register.html', form_data=form_data)
         
-        if len(password) < 6:
-            flash('Password must be at least 6 characters.', 'error')
+        password_is_valid, password_error = validate_password(password)
+        if not password_is_valid:
+            flash(password_error, 'error')
             return render_template('auth/register.html', form_data=form_data)
         
         if User.query.filter_by(username=username).first():
@@ -91,6 +105,7 @@ def login():
         return redirect(url_for('habits.dashboard'))
     
     return render_template('auth/login.html', form_data={})
+
 
 @auth_bp.route('/logout')
 @login_required

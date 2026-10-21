@@ -29,9 +29,9 @@ def test_register_page(client):
 def test_user_registration(client, app):
     response = client.post('/auth/register', data={
         'username': 'testuser',
-        'email': 'test@example.com',
-        'password': 'password123',
-        'confirm_password': 'password123'
+        'email': 'test@gmail.com',
+        'password': 'Password@123',
+        'confirm_password': 'Password@123'
     }, follow_redirects=True)
     
     assert response.status_code == 200
@@ -39,7 +39,7 @@ def test_user_registration(client, app):
     with app.app_context():
         user = User.query.filter_by(username='testuser').first()
         assert user is not None
-        assert user.email == 'test@example.com'
+        assert user.email == 'test@gmail.com'
 
 def test_user_login(client, app):
     # Create user first
