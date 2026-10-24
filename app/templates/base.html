@@ -105,6 +105,10 @@
         updateClock();
         setInterval(updateClock, 1000);
     </script>
+    <script>
+        window.DAILY_FIREBASE_CONFIG = {{ config['FIREBASE_WEB_CONFIG']|tojson }};
+    </script>
+    <script type="module" src="{{ url_for('static', filename='js/firebase-auth.js') }}?v=3"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

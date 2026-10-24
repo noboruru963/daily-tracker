@@ -1,7 +1,7 @@
 from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-import os
+from app.config import Config
 
 from app.security.sql_guard import SqlGuard, assert_safe_statement
 
@@ -10,6 +10,11 @@ login_manager = LoginManager()
 
 def create_app(config_name=None):
     app = Flask(__name__)
+    app.config.from_object(Config)
+    if config_name == 'testing':
+        app.config['TESTING'] = True
+    elif config_name is not None:
+        app.config.from_object(config_name)
     
     @app.route('/')
     def index():
@@ -62,11 +67,12 @@ def create_app(config_name=None):
         # executed against the database. See app/security/sql_guard.py.
         SqlGuard(app, db)
         db.create_all()
+
+        from sqlalchemy import inspect, text
+        inspector = inspect(db.engine)
         
         # Lightweight migration: add sort_order column to records table for existing DBs
         try:
-            from sqlalchemy import inspect, text
-            inspector = inspect(db.engine)
             if 'records' in inspector.get_table_names():
                 record_cols = [col['name'] for col in inspector.get_columns('records')]
                 # Raw SQL must always be a static literal (verified by the

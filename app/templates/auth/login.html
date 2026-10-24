@@ -13,12 +13,13 @@
                     <p class="text-muted">Sign in to continue tracking your habits</p>
                 </div>
                 
-                <form method="POST" action="{{ url_for('auth.login') }}">
+                <div id="authMessage" class="alert d-none" role="alert"></div>
+                <form id="loginForm">
                     <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
+                        <label for="email" class="form-label">Email</label>
                         <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-person"></i></span>
-                            <input type="text" class="form-control" id="username" name="username" required value="{{ form_data.get('username', '') }}">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input type="email" class="form-control" id="email" name="email" autocomplete="email" required>
                         </div>
                     </div>
                     
@@ -26,10 +27,7 @@
                         <label for="password" class="form-label">Password</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                            <input type="password" class="form-control" id="password" name="password" required>
-                            <button class="btn btn-outline-secondary" type="button" id="togglePassword" title="Show password">
-                                <i class="bi bi-eye"></i>
-                            </button>
+                            <input type="password" class="form-control" id="password" name="password" autocomplete="current-password" required>
                         </div>
                     </div>
 
@@ -52,22 +50,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.getElementById('togglePassword').addEventListener('click', function() {
-    const pwd = document.getElementById('password');
-    const icon = this.querySelector('i');
-    if (pwd.type === 'password') {
-        pwd.type = 'text';
-        icon.classList.replace('bi-eye', 'bi-eye-slash');
-        this.title = 'Hide password';
-    } else {
-        pwd.type = 'password';
-        icon.classList.replace('bi-eye-slash', 'bi-eye');
-        this.title = 'Show password';
-    }
-});
-</script>
 {% endblock %}
