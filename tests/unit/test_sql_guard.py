@@ -63,24 +63,20 @@ def client(app):
 # ---------------------------------------------------------------------------
 # Layer 1: payloads sent through real routes are stored as inert data
 # ---------------------------------------------------------------------------
-def test_login_cannot_be_bypassed_with_classic_payloads(client, app):
+def test_login_rejects_classic_payloads(client, app):
     for payload in PAYLOADS:
         response = client.post(
             '/auth/login',
             data={'username': payload, 'password': payload},
-            follow_redirects=True,
         )
-        assert response.status_code == 200
-        assert b'Invalid username or password' in response.data
+        assert response.status_code == 405
 
     with app.app_context():
-        # Only the seeded system user exists; nobody got in and no table broke.
-        users = User.query.all()
-        assert [u.username for u in users] == ['dailyteam']
+        assert [u.username for u in User.query.all()] == ['dailyteam']
         assert db.session.execute(text('SELECT COUNT(*) FROM users')).scalar() == 1
 
 
-def test_register_stores_payload_as_literal_data(client, app):
+def test_register_rejects_classic_python_credentials(client, app):
     payload = "admin'; DROP TABLE users;--"
     response = client.post(
         '/auth/register',
@@ -90,25 +86,15 @@ def test_register_stores_payload_as_literal_data(client, app):
             'password': 'secret123',
             'confirm_password': 'secret123',
         },
-        follow_redirects=True,
     )
-    assert response.status_code == 200
+    assert response.status_code == 405
 
     with app.app_context():
-        user = User.query.filter_by(username=payload).first()
-        assert user is not None  # stored byte-for-byte as data, not executed
-        assert db.session.execute(text('SELECT COUNT(*) FROM users')).scalar() >= 1
-
-    # The literal payload can even be used to log back in as a normal user.
-    response = client.post(
-        '/auth/login',
-        data={'username': payload, 'password': 'secret123'},
-    )
-    assert response.status_code == 302
-    assert 'dashboard' in response.headers['Location']
+        assert User.query.filter_by(username=payload).first() is None
+        assert db.session.execute(text('SELECT COUNT(*) FROM users')).scalar() == 1
 
 
-def test_community_post_payload_neutralised(client, app):
+def test_community_post_payload_neutralised(client, app, monkeypatch):
     with app.app_context():
         user = User(username='poster', email='poster@gmail.com')
         user.set_password('secret123')
@@ -119,7 +105,13 @@ def test_community_post_payload_neutralised(client, app):
         db.session.commit()
         habit_id = habit.id
 
-    client.post('/auth/login', data={'username': 'poster', 'password': 'secret123'})
+    monkeypatch.setattr('app.routes.auth.verify_firebase_id_token', lambda token: {
+        'localId': 'poster-firebase-uid',
+        'email': 'poster@gmail.com',
+        'emailVerified': True,
+    })
+    response = client.post('/auth/session-login', json={'idToken': 'test-token'})
+    assert response.status_code == 200
 
     payload = "'); DROP TABLE community_posts;--"
     response = client.post(
@@ -292,21 +284,18 @@ def test_entire_app_codebase_is_free_of_dynamic_sql():
 # ---------------------------------------------------------------------------
 # End-to-end: every statement of a full user flow is verified
 # ---------------------------------------------------------------------------
-def test_every_query_during_full_user_flow_is_parameterised(client, app):
+def test_every_query_during_full_user_flow_is_parameterised(client, app, monkeypatch):
     guard = app.extensions['sql_guard']
     guard.clear()
 
-    client.post(
-        '/auth/register',
-        data={
-            'username': 'flowuser',
-            'email': 'flow@gmail.com',
-            'password': 'secret123',
-            'confirm_password': 'secret123',
-        },
-        follow_redirects=True,
-    )
-    client.post('/auth/login', data={'username': 'flowuser', 'password': 'secret123'})
+    monkeypatch.setattr('app.routes.auth.verify_firebase_id_token', lambda token: {
+        'localId': 'flow-firebase-uid',
+        'email': 'flow@gmail.com',
+        'emailVerified': True,
+        'displayName': 'flowuser',
+    })
+    response = client.post('/auth/session-login', json={'idToken': 'test-token'})
+    assert response.status_code == 200
 
     response = client.post(
         '/habits/create',
