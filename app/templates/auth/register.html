@@ -13,12 +13,13 @@
                     <p class="text-muted">Start tracking your habits today</p>
                 </div>
                 
-                <form method="POST" action="{{ url_for('auth.register') }}">
+                <div id="authMessage" class="alert d-none" role="alert"></div>
+                <form id="registerForm">
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-person"></i></span>
-                            <input type="text" class="form-control" id="username" name="username" required value="{{ form_data.get('username', '') }}">
+                            <input type="text" class="form-control" id="username" name="username" autocomplete="username" required>
                         </div>
                     </div>
                     
@@ -26,19 +27,15 @@
                         <label for="email" class="form-label">Email</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                            <input type="email" class="form-control" id="email" name="email" required value="{{ form_data.get('email', '') }}">
+                            <input type="email" class="form-control" id="email" name="email" autocomplete="email" required>
                         </div>
-                        <div class="form-text">Must be a valid email from Gmail, Yahoo, Outlook, or similar providers</div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                            <input type="password" class="form-control" id="password" name="password" required>
-                            <button class="btn btn-outline-secondary" type="button" id="togglePassword" title="Show password">
-                                <i class="bi bi-eye"></i>
-                            </button>
+                            <input type="password" class="form-control" id="password" name="password" autocomplete="new-password" minlength="6" required>
                         </div>
                         <div class="form-text">Must be at least 6 characters</div>
                     </div>
@@ -47,10 +44,7 @@
                         <label for="confirm_password" class="form-label">Confirm Password</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
-                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                            <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword" title="Show password">
-                                <i class="bi bi-eye"></i>
-                            </button>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" autocomplete="new-password" minlength="6" required>
                         </div>
                     </div>
                     
@@ -68,24 +62,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-function setupToggle(btnId, inputId) {
-    document.getElementById(btnId).addEventListener('click', function() {
-        const inp = document.getElementById(inputId);
-        const icon = this.querySelector('i');
-        if (inp.type === 'password') {
-            inp.type = 'text';
-            icon.classList.replace('bi-eye', 'bi-eye-slash');
-        } else {
-            inp.type = 'password';
-            icon.classList.replace('bi-eye-slash', 'bi-eye');
-        }
-    });
-}
-setupToggle('togglePassword', 'password');
-setupToggle('toggleConfirmPassword', 'confirm_password');
-</script>
 {% endblock %}

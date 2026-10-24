@@ -14,6 +14,7 @@ setup(
         'Werkzeug>=2.3.7',
         'Jinja2>=3.1.2',
         'SQLAlchemy>=2.0.23',
+        'python-dotenv>=1.0.1,<2.0.0',
     ],
     extras_require={
         'dev': [
