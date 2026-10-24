@@ -122,6 +122,10 @@ if (registerForm) {
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
         const confirmation = document.getElementById('confirm_password').value;
+        if (password.length < 8 || !/\p{Lu}/u.test(password) || !/[^\p{L}\p{N}\s]/u.test(password)) {
+            showMessage('Password must be at least 8 characters and include an uppercase letter and a symbol.');
+            return;
+        }
         if (password !== confirmation) {
             showMessage('Passwords do not match.');
             return;

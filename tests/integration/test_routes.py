@@ -52,6 +52,7 @@ def test_login_page_uses_firebase_email_auth(client):
     assert response.status_code == 200
     assert b'id="loginForm"' in response.data
     assert b'daily-tracker-c942a.firebaseapp.com' in response.data
+    assert b'/auth/forgot-password' in response.data
 
 
 def test_register_page_uses_firebase_auth(client):
@@ -126,21 +127,11 @@ def test_forgot_password_surfaces_firebase_api_key_error(client, monkeypatch):
     assert response.status_code == 200
     assert b'Firebase rejected FIREBASE_API_KEY' in response.data
 
-def test_user_registration(client, app):
-    response = client.post('/auth/register', data={
-        'username': 'testuser',
-        'email': 'test@gmail.com',
-        'password': 'Password@123',
-        'confirm_password': 'Password@123'
-    }, follow_redirects=True)
-    
+def test_user_registration_page_uses_firebase_auth(client):
+    response = client.get('/auth/register')
     assert response.status_code == 200
-    assert response.json['redirect'] == '/habits/dashboard'
-
-    with app.app_context():
-        user = User.query.filter_by(username='testuser').first()
-        assert user is not None
-        assert user.email == 'test@gmail.com'
+    assert b'id="registerForm"' in response.data
+    assert b'id="toggleConfirmPassword"' in response.data
 
 def test_firebase_session_login_links_existing_python_profile(client, app, monkeypatch):
     with app.app_context():
