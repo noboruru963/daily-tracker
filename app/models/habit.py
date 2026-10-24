@@ -35,56 +35,59 @@ class Habit(db.Model):
             'is_pinned': self.is_pinned
         }
     
-    def get_streak(self):
-        """Calculate current streak (consecutive days with at least one record)."""
-        if not self.records:
-            return 0
-        
-        record_dates = set()
-        for r in self.records:
-            record_dates.add(r.date.date() if isinstance(r.date, datetime) else r.date)
-        
-        today = date.today()
-        max_record_date = max(record_dates)
-        
-        # Allow up to 2 days ahead to account for timezone differences
-        start_date = max(today, min(max_record_date, today + timedelta(days=2)))
-        
-        streak = 0
-        check_date = start_date
-        
-        while check_date in record_dates:
-            streak += 1
-            check_date -= timedelta(days=1)
-        
-        return streak
-    
-    def get_best_streak(self):
-        """Calculate the best (longest) streak ever achieved."""
-        if not self.records:
-            return 0
-        
-        record_dates = sorted(set(
+    def _record_days(self, today=None):
+        """Unique calendar days with at least one record (future days ignored)."""
+        today = today or date.today()
+        days = {
             r.date.date() if isinstance(r.date, datetime) else r.date
             for r in self.records
-        ))
-        
+            if r.date is not None
+        }
+        return {d for d in days if d <= today}
+
+    def is_done_today(self, today=None):
+        today = today or date.today()
+        return today in self._record_days(today)
+
+    def get_streak(self, today=None):
+        """Current streak: consecutive days with at least one record.
+
+        Each new day with a record adds 1 (several records on the same day
+        count once). A streak stays alive until the end of the day after the
+        last record, so logging yesterday but not yet today still shows it.
+        """
+        today = today or date.today()
+        days = self._record_days(today)
+
+        if today in days:
+            check_date = today
+        elif (today - timedelta(days=1)) in days:
+            check_date = today - timedelta(days=1)
+        else:
+            return 0
+
+        streak = 0
+        while check_date in days:
+            streak += 1
+            check_date -= timedelta(days=1)
+        return streak
+
+    def get_best_streak(self, today=None):
+        """Longest run of consecutive days ever achieved."""
+        days = sorted(self._record_days(today))
+        if not days:
+            return 0
+
         best = 1
         current = 1
-        for i in range(1, len(record_dates)):
-            if record_dates[i] - record_dates[i - 1] == timedelta(days=1):
+        for i in range(1, len(days)):
+            if days[i] - days[i - 1] == timedelta(days=1):
                 current += 1
                 best = max(best, current)
             else:
                 current = 1
-        
         return best
     
-    def get_total_days(self):
+    def get_total_days(self, today=None):
         """Get total number of unique days with records."""
-        if not self.records:
-            return 0
-        return len(set(
-            r.date.date() if isinstance(r.date, datetime) else r.date
-            for r in self.records
-        ))
+        return len(self._record_days(today))

@@ -113,10 +113,15 @@ def add_record(habit_id):
             habit.visual_settings['current_value'] = clamped
             flag_modified(habit, 'visual_settings')
         
+        streak_before = habit.get_streak()
         db.session.add(record)
         db.session.commit()
-        
-        flash('Record added successfully!', 'success')
+        streak_after = habit.get_streak()
+
+        if streak_after > streak_before:
+            flash(f'Record added! Streak extended to {streak_after} day{"s" if streak_after != 1 else ""}.', 'success')
+        else:
+            flash('Record added successfully!', 'success')
         return redirect(url_for('habits.view_habit', habit_id=habit_id))
     
     today_str = request.args.get('date', date.today().isoformat())
@@ -187,10 +192,18 @@ def quick_add_record(habit_id):
         habit.visual_settings['current_value'] = clamped
         flag_modified(habit, 'visual_settings')
     
+    streak_before = habit.get_streak()
     db.session.add(record)
     db.session.commit()
-    
-    return jsonify({'success': True, 'message': 'Record added', 'record_id': record.id})
+    streak_after = habit.get_streak()
+
+    return jsonify({
+        'success': True,
+        'message': 'Record added',
+        'record_id': record.id,
+        'streak': streak_after,
+        'streak_increased': streak_after > streak_before
+    })
 
 @tracking_bp.route('/<int:habit_id>/records')
 @login_required

@@ -747,6 +747,13 @@ body.dark-mode .btn-pin.pinned { color: white; }
     animation: streakGlow 2s ease-in-out infinite;
 }
 .streak-badge i { font-size: 0.7rem; }
+/* Streak alive but not yet logged today: dimmed, no glow */
+.streak-badge.streak-at-risk {
+    animation: none;
+    opacity: 0.6;
+}
+.streak-stat-value { font-size: 1.6rem; font-weight: 700; }
+.streak-stat-value.streak-stat-active { color: #f97316; }
 @keyframes streakGlow {
     0%, 100% { box-shadow: 0 0 4px rgba(249, 115, 22, 0.3); }
     50% { box-shadow: 0 0 12px rgba(249, 115, 22, 0.6); }
