@@ -75,97 +75,20 @@ def verify_firebase_id_token(id_token):
     return users[0]
 
 
-def send_firebase_password_reset(email):
-    api_key = current_app.config.get('FIREBASE_API_KEY')
-    if not api_key:
-        raise FirebaseAuthError(
-            'Firebase API key is not configured. Set FIREBASE_API_KEY in .env and restart Flask.',
-            503,
-        )
 
-    body = json.dumps({
-        'requestType': 'PASSWORD_RESET',
-        'email': email,
-    }).encode('utf-8')
-    endpoint = f'{FIREBASE_SEND_OOB_URL}?{urlencode({"key": api_key})}'
-    firebase_request = Request(
-        endpoint,
-        data=body,
-        headers={
-            'Content-Type': 'application/json',
-            'Referer': request.host_url,
-        },
-        method='POST',
-    )
-    try:
-        with urlopen(firebase_request, timeout=10) as response:
-            json.loads(response.read().decode('utf-8'))
-    except HTTPError as error:
-        try:
-            error_body = json.loads(error.read().decode('utf-8'))
-            firebase_message = error_body.get('error', {}).get('message', '')
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            firebase_message = ''
-
-        if firebase_message == 'API_KEY_INVALID':
-            raise FirebaseAuthError(
-                'Firebase rejected FIREBASE_API_KEY. Copy the exact apiKey from Firebase Project settings → Your apps.',
-                503,
-            ) from error
-        if firebase_message == 'OPERATION_NOT_ALLOWED':
-            raise FirebaseAuthError(
-                'Firebase password reset is disabled. Enable Email/Password in Firebase Authentication.',
-                503,
-            ) from error
-        if firebase_message == 'TOO_MANY_ATTEMPTS_TRY_LATER':
-            raise FirebaseAuthError(
-                'Firebase temporarily blocked password-reset requests. Wait and try again later.',
-                429,
-            ) from error
-        if firebase_message == 'INVALID_EMAIL':
-            raise FirebaseAuthError('Enter a valid email address.', 400) from error
-        if firebase_message in ('EMAIL_NOT_FOUND', 'USER_NOT_FOUND'):
-            current_app.logger.info('Firebase did not find an account for a password-reset request.')
-            return
-
-        current_app.logger.error(
-            'Firebase password-reset request failed with HTTP %s (%s).',
-            error.code,
-            firebase_message or 'unknown Firebase error',
-        )
-        raise FirebaseAuthError(
-            'Firebase could not send the password-reset email. Check the Flask terminal for details.',
-            503,
-        ) from error
-    except (URLError, TimeoutError, OSError) as error:
-        current_app.logger.exception('Could not connect to Firebase for a password-reset request.')
-        raise FirebaseAuthError(
-            'Could not connect to Firebase. Check your internet connection and try again.',
-            503,
-        ) from error
-    except (UnicodeDecodeError, json.JSONDecodeError) as error:
-        current_app.logger.exception('Firebase returned an invalid password-reset response.')
-        raise FirebaseAuthError(
-            'Firebase returned an invalid response. Please try again.',
-            503,
-        ) from error
+def validate_password(password):
+    if not isinstance(password, str) or not password:
+        return False, 'Password is required.'
+    if len(password) < 8:
+        return False, 'Password must be at least 8 characters long.'
+    if not any(character.isupper() for character in password):
+        return False, 'Password must contain at least one capital letter.'
+    if not any(not character.isalnum() and not character.isspace() for character in password):
+        return False, 'Password must contain at least one symbol.'
+    return True, ''
 
 
-def _unique_username(display_name, email, firebase_uid):
-    base = (display_name or email.split('@', 1)[0]).strip()[:80] or 'user'
-    if not User.query.filter_by(username=base).first():
-        return base
-
-    suffix = firebase_uid[-8:]
-    username = f'{base[:70]}-{suffix}'
-    counter = 1
-    while User.query.filter_by(username=username).first():
-        username = f'{base[:66]}-{suffix}-{counter}'
-        counter += 1
-    return username
-
-
-@auth_bp.route('/register', methods=['GET'])
+@auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('habits.dashboard'))
@@ -176,23 +99,50 @@ def register():
 def forgot_password():
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
-        if not email:
-            flash('Enter the email address for your Firebase account.', 'error')
-            return redirect(url_for('auth.forgot_password'))
-
-        try:
-            send_firebase_password_reset(email)
-        except FirebaseAuthError as error:
-            current_app.logger.error('Firebase password-reset request failed: %s', error)
-            flash(str(error), 'error')
-            return redirect(url_for('auth.forgot_password'))
-
-        flash(
-            'Firebase accepted the request. If this email belongs to a Firebase Authentication account, '
-            'a reset message should arrive. Check Inbox, Spam, and Promotions.',
-            'success',
-        )
-        return redirect(url_for('auth.forgot_password'))
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        
+        form_data = {'username': username, 'email': email}
+        
+        if not username or not email or not password:
+            flash('All fields are required.', 'error')
+            return render_template('auth/register.html', form_data=form_data)
+        
+        email_domain = email.split('@')[-1].lower() if '@' in email else ''
+        if email_domain not in ALLOWED_EMAIL_DOMAINS:
+            flash('Please use a valid email address (e.g. Gmail, Yahoo, Outlook, etc.).', 'error')
+            return render_template('auth/register.html', form_data=form_data)
+        
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return render_template('auth/register.html', form_data=form_data)
+        
+        password_is_valid, password_error = validate_password(password)
+        if not password_is_valid:
+            flash(password_error, 'error')
+            return render_template('auth/register.html', form_data=form_data)
+        
+        if User.query.filter_by(username=username).first():
+            flash('Username already taken.', 'error')
+            return render_template('auth/register.html', form_data=form_data)
+        
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered.', 'error')
+            return render_template('auth/register.html', form_data=form_data)
+        
+        user = User(username=username, email=email)
+        user.set_password(password)
+        db.session.add(user)
+        
+        settings = UserSettings(user=user)
+        db.session.add(settings)
+        
+        db.session.commit()
+        
+        flash('Registration successful! Please log in.', 'success')
+        return redirect(url_for('auth.login'))
+    
+    return render_template('auth/register.html', form_data={})
 
     return render_template('auth/forgot_password.html')
 
@@ -253,6 +203,7 @@ def firebase_session_login():
 
     login_user(user, remember=payload.get('remember') is True)
     return jsonify(redirect=url_for('habits.dashboard'))
+
 
 
 @auth_bp.route('/logout')

@@ -30,6 +30,46 @@
         </div>
     </div>
 
+    {% set current_streak = habit.get_streak() %}
+    {% set done_today = habit.is_done_today() %}
+    <div class="row g-3 mb-4">
+        <div class="col-4">
+            <div class="card streak-stat h-100">
+                <div class="card-body text-center py-3">
+                    <div class="streak-stat-value {{ 'streak-stat-active' if current_streak > 0 and done_today else '' }}">
+                        <i class="bi bi-fire"></i> {{ current_streak }}
+                    </div>
+                    <div class="text-muted small">Current streak</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card streak-stat h-100">
+                <div class="card-body text-center py-3">
+                    <div class="streak-stat-value"><i class="bi bi-trophy"></i> {{ habit.get_best_streak() }}</div>
+                    <div class="text-muted small">Best streak</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card streak-stat h-100">
+                <div class="card-body text-center py-3">
+                    <div class="streak-stat-value"><i class="bi bi-calendar-check"></i> {{ habit.get_total_days() }}</div>
+                    <div class="text-muted small">Days logged</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            {% if done_today %}
+            <div class="text-success small"><i class="bi bi-check-circle-fill me-1"></i>Logged today. Come back tomorrow to extend your streak.</div>
+            {% elif current_streak > 0 %}
+            <div class="text-warning small"><i class="bi bi-exclamation-circle-fill me-1"></i>Log this habit today to keep your {{ current_streak }}-day streak alive.</div>
+            {% else %}
+            <div class="text-muted small"><i class="bi bi-lightning-charge me-1"></i>Log this habit today to start a streak.</div>
+            {% endif %}
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-12">
             <div class="card mb-4">

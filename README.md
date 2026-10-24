@@ -36,10 +36,12 @@ A highly customizable, and highly personal habit tracker app built with Python F
    pip install -r requirements.txt
    ```
 
-4. Set environment variables (optional):
+4. Set environment variables:
    ```bash
    set SECRET_KEY=your-secret-key
    ```
+   Use a strong, unique secret key in production. Passwords must be at least 8 characters and
+   contain an uppercase letter and a symbol.
 
 ### Firebase Authentication and Python app database
 

@@ -538,6 +538,20 @@ body.dark-mode .btn-like.liked { border-color: var(--primary); background: var(-
     transition: var(--transition);
     color: var(--text-primary);
     background-color: var(--input-bg);
+    caret-color: var(--text-primary);
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+textarea,
+[contenteditable="true"] {
+    caret-color: var(--text-primary);
+    cursor: url("../images/text-cursor-dark.svg") 8 12, text;
+}
+
+body.dark-mode input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+body.dark-mode textarea,
+body.dark-mode [contenteditable="true"] {
+    cursor: url("../images/text-cursor-light.svg") 8 12, text;
 }
 
 .form-control:focus, .form-select:focus {
@@ -733,6 +747,13 @@ body.dark-mode .btn-pin.pinned { color: white; }
     animation: streakGlow 2s ease-in-out infinite;
 }
 .streak-badge i { font-size: 0.7rem; }
+/* Streak alive but not yet logged today: dimmed, no glow */
+.streak-badge.streak-at-risk {
+    animation: none;
+    opacity: 0.6;
+}
+.streak-stat-value { font-size: 1.6rem; font-weight: 700; }
+.streak-stat-value.streak-stat-active { color: #f97316; }
 @keyframes streakGlow {
     0%, 100% { box-shadow: 0 0 4px rgba(249, 115, 22, 0.3); }
     50% { box-shadow: 0 0 12px rgba(249, 115, 22, 0.6); }

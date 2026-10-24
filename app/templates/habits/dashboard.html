@@ -35,7 +35,7 @@
                     </span>
                     <span class="badge" style="background: var(--primary);">{{ habit.visual_model_type|capitalize }}</span>
                     {% if current_streak > 0 %}
-                    <span class="badge ms-2 streak-badge" title="{{ current_streak }} day streak!">
+                    <span class="badge ms-2 streak-badge{{ '' if habit.is_done_today() else ' streak-at-risk' }}" title="{{ current_streak }} day streak!{{ '' if habit.is_done_today() else ' Log today to keep it going.' }}">
                         <i class="bi bi-fire"></i> {{ current_streak }}
                     </span>
                     {% endif %}
@@ -95,7 +95,7 @@
                             </span>
                             <div class="d-flex gap-1 align-items-center">
                                 {% if current_streak > 0 %}
-                                <span class="badge streak-badge" title="{{ current_streak }} day streak!">
+                                <span class="badge streak-badge{{ '' if habit.is_done_today() else ' streak-at-risk' }}" title="{{ current_streak }} day streak!{{ '' if habit.is_done_today() else ' Log today to keep it going.' }}">
                                     <i class="bi bi-fire"></i> {{ current_streak }}
                                 </span>
                                 {% endif %}
@@ -248,7 +248,7 @@
                             {{ habit.name }}
                         </span>
                         {% if current_streak > 0 %}
-                        <span class="badge ms-2 streak-badge" title="{{ current_streak }} day streak!">
+                        <span class="badge ms-2 streak-badge{{ '' if habit.is_done_today() else ' streak-at-risk' }}" title="{{ current_streak }} day streak!{{ '' if habit.is_done_today() else ' Log today to keep it going.' }}">
                             <i class="bi bi-fire"></i> {{ current_streak }}
                         </span>
                         {% endif %}
@@ -316,7 +316,7 @@
                     </span>
                     <div class="d-flex gap-1 align-items-center">
                         {% if current_streak > 0 %}
-                        <span class="badge streak-badge" title="{{ current_streak }} day streak!">
+                        <span class="badge streak-badge{{ '' if habit.is_done_today() else ' streak-at-risk' }}" title="{{ current_streak }} day streak!{{ '' if habit.is_done_today() else ' Log today to keep it going.' }}">
                             <i class="bi bi-fire"></i> {{ current_streak }}
                         </span>
                         {% endif %}

@@ -3,6 +3,25 @@ from app import create_app, db
 from app.models.user import User
 from app.models.habit import Habit
 from app.models.record import Record
+from app.routes.auth import validate_password
+
+
+def test_password_validation():
+    assert validate_password('Secure@123') == (True, '')
+
+    valid, message = validate_password('Sec@1')
+    assert not valid
+    assert 'at least 8 characters' in message
+
+    valid, message = validate_password('secure@123')
+    assert not valid
+    assert 'capital letter' in message
+
+    valid, message = validate_password('Secure1234')
+    assert not valid
+    assert 'symbol' in message
+
+    assert validate_password('')[0] is False
 
 @pytest.fixture
 def app():

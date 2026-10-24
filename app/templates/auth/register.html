@@ -35,9 +35,13 @@
                         <label for="password" class="form-label">Password</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                            <input type="password" class="form-control" id="password" name="password" autocomplete="new-password" minlength="6" required>
+                            <input type="password" class="form-control" id="password" name="password" minlength="8" required aria-describedby="passwordRequirements">
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword" title="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
                         </div>
-                        <div class="form-text">Must be at least 6 characters</div>
+                        <div class="form-text" id="passwordRequirements">At least 8 characters, one capital letter, and one symbol.</div>
+                        <div id="passwordFeedback" aria-live="polite"></div>
                     </div>
                     
                     <div class="mb-3">
@@ -62,4 +66,40 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setupToggle(btnId, inputId) {
+    document.getElementById(btnId).addEventListener('click', function() {
+        const inp = document.getElementById(inputId);
+        const icon = this.querySelector('i');
+        if (inp.type === 'password') {
+            inp.type = 'text';
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            inp.type = 'password';
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    });
+}
+setupToggle('togglePassword', 'password');
+setupToggle('toggleConfirmPassword', 'confirm_password');
+
+const passwordInput = document.getElementById('password');
+const passwordFeedback = document.getElementById('passwordFeedback');
+passwordInput.addEventListener('input', function() {
+    const checks = [
+        ['At least 8 characters', this.value.length >= 8],
+        ['At least one capital letter', /\p{Lu}/u.test(this.value)],
+        ['At least one symbol', /[^\p{L}\p{N}\s]/u.test(this.value)]
+    ];
+    passwordFeedback.replaceChildren(...checks.map(function(check) {
+        const item = document.createElement('small');
+        item.className = check[1] ? 'd-block text-success' : 'd-block text-danger';
+        item.textContent = `${check[1] ? '✓' : '✗'} ${check[0]}`;
+        return item;
+    }));
+});
+</script>
 {% endblock %}
