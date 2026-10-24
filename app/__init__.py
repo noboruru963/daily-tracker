@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 import os
 
+from app.security.sql_guard import SqlGuard, assert_safe_statement
+
 db = SQLAlchemy()
 login_manager = LoginManager()
 
@@ -28,6 +30,14 @@ def create_app(config_name=None):
     elif config_name is not None:
         app.config.from_object(config_name)
     
+    # Optional config overrides (e.g. a test config class). Unknown string
+    # names fall back to the defaults set above.
+    if config_name is not None:
+        try:
+            app.config.from_object(config_name)
+        except (ImportError, TypeError):
+            pass
+    
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
@@ -48,6 +58,9 @@ def create_app(config_name=None):
     app.register_blueprint(calories_bp, url_prefix='/calories')
     
     with app.app_context():
+        # SQL injection prevention: intercept and verify every statement
+        # executed against the database. See app/security/sql_guard.py.
+        SqlGuard(app, db)
         db.create_all()
         
         # Lightweight migration: add sort_order column to records table for existing DBs
@@ -56,10 +69,14 @@ def create_app(config_name=None):
             inspector = inspect(db.engine)
             if 'records' in inspector.get_table_names():
                 record_cols = [col['name'] for col in inspector.get_columns('records')]
+                # Raw SQL must always be a static literal (verified by the
+                # scanner) - never built from user or runtime input.
                 if 'sort_order' not in record_cols:
+                    assert_safe_statement('ALTER TABLE records ADD COLUMN sort_order INTEGER DEFAULT 0')
                     db.session.execute(text('ALTER TABLE records ADD COLUMN sort_order INTEGER DEFAULT 0'))
                     db.session.commit()
                 if 'record_icon' not in record_cols:
+                    assert_safe_statement("ALTER TABLE records ADD COLUMN record_icon VARCHAR(50) DEFAULT ''")
                     db.session.execute(text("ALTER TABLE records ADD COLUMN record_icon VARCHAR(50) DEFAULT ''"))
                     db.session.commit()
         except Exception:
