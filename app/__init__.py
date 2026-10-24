@@ -16,6 +16,17 @@ def create_app(config_name=None):
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///daily.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    if isinstance(config_name, str):
+        if config_name != 'testing':
+            raise ValueError(f'Unknown configuration: {config_name}')
+        app.config.update(
+            TESTING=True,
+            SECRET_KEY='test-secret-key',
+            SQLALCHEMY_DATABASE_URI='sqlite:///:memory:',
+        )
+    elif config_name is not None:
+        app.config.from_object(config_name)
     
     db.init_app(app)
     login_manager.init_app(app)
